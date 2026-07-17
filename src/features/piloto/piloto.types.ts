@@ -24,6 +24,7 @@ export type PilotoSale = {
 
 export type CartItem = {
   productId: number;
+  catalogProductId: number | null;
   name: string;
   price: number;
   quantity: number;

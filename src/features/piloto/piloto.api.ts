@@ -10,7 +10,7 @@ type SaleResponse = {
   item: PilotoSale;
 };
 
-function normalizeBarcode(barcode: string) {
+export function normalizeBarcode(barcode: string) {
   return barcode.trim().replace(/\s+/g, "");
 }
 
@@ -53,7 +53,7 @@ export async function createSale(items: CartItem[], paymentMethod: PilotoPayment
     body: JSON.stringify({
       paymentMethod,
       items: items.map((item) => ({
-        productId: item.productId,
+        productId: item.catalogProductId,
         name: item.name,
         price: item.price,
         quantity: item.quantity,

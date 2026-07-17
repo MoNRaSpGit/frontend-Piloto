@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { createSale, findProductByBarcode } from "./piloto.api";
+import { createSale, findProductByBarcode, normalizeBarcode } from "./piloto.api";
 import { ScannerCart } from "./components/ScannerCart";
 import { ScannerCheckout } from "./components/ScannerCheckout";
 import { ScannerInput } from "./components/ScannerInput";
+import { ScannerQuickAddModal } from "./components/ScannerQuickAddModal";
 import { usePilotoCart } from "./hooks/usePilotoCart";
 import { printSaleTicketByQz } from "./services/piloto.qzPrint";
 import type { PilotoPaymentMethod } from "./piloto.types";
+
+const NOT_FOUND_MESSAGE = "Producto no encontrado.";
 
 export function PilotoHomePage() {
   const [barcodeInput, setBarcodeInput] = useState("");
@@ -14,15 +17,17 @@ export function PilotoHomePage() {
   const [error, setError] = useState("");
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [focusSignal, setFocusSignal] = useState(0);
-  const { cartItems, lastScannedProductId, addProduct, addOne, removeOne, updateItem, clearCart, total } = usePilotoCart();
+  const [quickAddBarcode, setQuickAddBarcode] = useState<string | null>(null);
+  const { cartItems, lastScannedProductId, addProduct, addManualItem, addOne, removeOne, updateItem, clearCart, total } =
+    usePilotoCart();
 
-  // Al cerrarse el modal de cobro (cancelado o confirmado), devolver el foco
+  // Al cerrarse el modal de cobro o el de alta rapida, devolver el foco
   // al input del escaner para seguir escaneando sin tocar el mouse.
   useEffect(() => {
-    if (!isCheckoutOpen) {
+    if (!isCheckoutOpen && !quickAddBarcode) {
       setFocusSignal((signal) => signal + 1);
     }
-  }, [isCheckoutOpen]);
+  }, [isCheckoutOpen, quickAddBarcode]);
 
   function handleEmptyEnter() {
     if (!cartItems.length) return;
@@ -37,11 +42,22 @@ export function PilotoHomePage() {
       const response = await findProductByBarcode(barcode);
       addProduct(response.item);
     } catch (searchError) {
-      setError(searchError instanceof Error ? searchError.message : "No se pudo buscar el producto.");
+      const message = searchError instanceof Error ? searchError.message : "No se pudo buscar el producto.";
+      if (message === NOT_FOUND_MESSAGE) {
+        setQuickAddBarcode(normalizeBarcode(barcode));
+      } else {
+        setError(message);
+      }
     } finally {
       setIsLoading(false);
       setBarcodeInput("");
     }
+  }
+
+  function handleQuickAddConfirm(name: string, price: number) {
+    if (!quickAddBarcode) return;
+    addManualItem(quickAddBarcode, name, price);
+    setQuickAddBarcode(null);
   }
 
   async function handleCharge(paymentMethod: PilotoPaymentMethod) {
@@ -110,6 +126,14 @@ export function PilotoHomePage() {
           <p>Todavia no escaneaste ningun producto.</p>
         </section>
       )}
+
+      {quickAddBarcode ? (
+        <ScannerQuickAddModal
+          barcode={quickAddBarcode}
+          onClose={() => setQuickAddBarcode(null)}
+          onConfirm={handleQuickAddConfirm}
+        />
+      ) : null}
     </main>
   );
 }
