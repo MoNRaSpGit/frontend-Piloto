@@ -1,0 +1,28 @@
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter, HashRouter } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { App } from "./app/App";
+import "./styles/global.css";
+
+const Router = import.meta.env.MODE === "github-pages" ? HashRouter : BrowserRouter;
+
+ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
+  <React.StrictMode>
+    <Router>
+      <App />
+      <ToastContainer
+        position="bottom-right"
+        autoClose={3200}
+        hideProgressBar
+        newestOnTop
+        closeButton
+        pauseOnFocusLoss={false}
+        pauseOnHover
+        draggable={false}
+        theme="light"
+      />
+    </Router>
+  </React.StrictMode>
+);
