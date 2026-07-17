@@ -5,6 +5,7 @@ import { ScannerCart } from "./components/ScannerCart";
 import { ScannerCheckout } from "./components/ScannerCheckout";
 import { ScannerInput } from "./components/ScannerInput";
 import { usePilotoCart } from "./hooks/usePilotoCart";
+import { printSaleTicketByQz } from "./services/piloto.qzPrint";
 import type { PilotoPaymentMethod } from "./piloto.types";
 
 export function PilotoHomePage() {
@@ -30,9 +31,24 @@ export function PilotoHomePage() {
 
   async function handleCharge(paymentMethod: PilotoPaymentMethod) {
     try {
+      const ticketItems = cartItems;
+      const ticketTotal = total;
       await createSale(cartItems, paymentMethod);
       clearCart();
       toast.success("Venta confirmada.");
+
+      try {
+        await printSaleTicketByQz({
+          externalId: `piloto-${Date.now()}`,
+          chargedAtIso: new Date().toISOString(),
+          paymentMethod,
+          items: ticketItems,
+          total: ticketTotal
+        });
+      } catch (printError) {
+        toast.error(printError instanceof Error ? `No se pudo imprimir: ${printError.message}` : "No se pudo imprimir el ticket.");
+      }
+
       return true;
     } catch (chargeError) {
       toast.error(chargeError instanceof Error ? chargeError.message : "No se pudo confirmar la venta.");

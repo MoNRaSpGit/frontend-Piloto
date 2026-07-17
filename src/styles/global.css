@@ -387,7 +387,7 @@ input {
 .piloto-payment-grid {
   display: grid;
   gap: 0.6rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-bottom: 1.1rem;
 }
 
@@ -412,6 +412,11 @@ input {
 .piloto-payment-btn--card {
   background: linear-gradient(180deg, #f2f8ff 0%, #dceaff 100%);
   color: #18467d;
+}
+
+.piloto-payment-btn--credit {
+  background: linear-gradient(180deg, #fdf7ee 0%, #f8e4c4 100%);
+  color: #7a4f14;
 }
 
 .piloto-payment-btn.is-active {

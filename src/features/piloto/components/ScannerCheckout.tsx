@@ -16,7 +16,8 @@ function formatCurrency(amount: number) {
 
 const PAYMENT_METHOD_OPTIONS: Array<{ value: PilotoPaymentMethod; label: string; className: string }> = [
   { value: "efectivo", label: "Efectivo", className: "piloto-payment-btn--cash" },
-  { value: "tarjeta", label: "Tarjeta", className: "piloto-payment-btn--card" }
+  { value: "tarjeta", label: "Tarjeta", className: "piloto-payment-btn--card" },
+  { value: "credito", label: "Credito", className: "piloto-payment-btn--credit" }
 ];
 
 export function ScannerCheckout({ total, onCharge }: ScannerCheckoutProps) {
