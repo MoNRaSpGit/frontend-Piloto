@@ -405,18 +405,18 @@ input {
 }
 
 .piloto-payment-btn--cash {
-  background: linear-gradient(180deg, #f3fbf5 0%, #dcf5e4 100%);
-  color: #1b5a33;
+  background: linear-gradient(180deg, #9fe6bf 0%, #57c98c 100%);
+  color: #08341d;
 }
 
 .piloto-payment-btn--card {
-  background: linear-gradient(180deg, #f2f8ff 0%, #dceaff 100%);
-  color: #18467d;
+  background: linear-gradient(180deg, #9dc9fb 0%, #4f93e8 100%);
+  color: #0b2c52;
 }
 
 .piloto-payment-btn--credit {
-  background: linear-gradient(180deg, #fdf7ee 0%, #f8e4c4 100%);
-  color: #7a4f14;
+  background: linear-gradient(180deg, #f3c877 0%, #dc9a2f 100%);
+  color: #442a04;
 }
 
 .piloto-payment-btn.is-active {

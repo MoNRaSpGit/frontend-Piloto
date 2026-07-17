@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { createSale, findProductByBarcode } from "./piloto.api";
 import { ScannerCart } from "./components/ScannerCart";
@@ -12,7 +12,22 @@ export function PilotoHomePage() {
   const [barcodeInput, setBarcodeInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [focusSignal, setFocusSignal] = useState(0);
   const { cartItems, lastScannedProductId, addProduct, addOne, removeOne, updateItem, clearCart, total } = usePilotoCart();
+
+  // Al cerrarse el modal de cobro (cancelado o confirmado), devolver el foco
+  // al input del escaner para seguir escaneando sin tocar el mouse.
+  useEffect(() => {
+    if (!isCheckoutOpen) {
+      setFocusSignal((signal) => signal + 1);
+    }
+  }, [isCheckoutOpen]);
+
+  function handleEmptyEnter() {
+    if (!cartItems.length) return;
+    setIsCheckoutOpen(true);
+  }
 
   async function handleSearch(barcode: string) {
     setIsLoading(true);
@@ -63,7 +78,15 @@ export function PilotoHomePage() {
         <h1>Escaneo de productos</h1>
       </header>
 
-      <ScannerInput value={barcodeInput} onChange={setBarcodeInput} onSubmit={handleSearch} isLoading={isLoading} error={error} />
+      <ScannerInput
+        value={barcodeInput}
+        onChange={setBarcodeInput}
+        onSubmit={handleSearch}
+        onEmptyEnter={handleEmptyEnter}
+        isLoading={isLoading}
+        error={error}
+        focusSignal={focusSignal}
+      />
 
       {cartItems.length ? (
         <>
@@ -74,7 +97,13 @@ export function PilotoHomePage() {
             onRemoveOne={removeOne}
             onEdit={updateItem}
           />
-          <ScannerCheckout total={total} onCharge={handleCharge} />
+          <ScannerCheckout
+            total={total}
+            isOpen={isCheckoutOpen}
+            onOpen={() => setIsCheckoutOpen(true)}
+            onClose={() => setIsCheckoutOpen(false)}
+            onCharge={handleCharge}
+          />
         </>
       ) : (
         <section className="piloto-empty-state">

@@ -1,8 +1,11 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { PilotoPaymentMethod } from "../piloto.types";
 
 type ScannerCheckoutProps = {
   total: number;
+  isOpen: boolean;
+  onOpen: () => void;
+  onClose: () => void;
   onCharge: (paymentMethod: PilotoPaymentMethod) => Promise<boolean>;
 };
 
@@ -20,10 +23,18 @@ const PAYMENT_METHOD_OPTIONS: Array<{ value: PilotoPaymentMethod; label: string;
   { value: "credito", label: "Credito", className: "piloto-payment-btn--credit" }
 ];
 
-export function ScannerCheckout({ total, onCharge }: ScannerCheckoutProps) {
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+export function ScannerCheckout({ total, isOpen, onOpen, onClose, onCharge }: ScannerCheckoutProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PilotoPaymentMethod>("efectivo");
+  const confirmButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Autofocus del boton Confirmar al abrir: permite el camino feliz por teclado
+  // (Enter en el escaner abre el modal, un segundo Enter confirma el cobro).
+  useEffect(() => {
+    if (!isOpen) return;
+    const timeoutId = window.setTimeout(() => confirmButtonRef.current?.focus(), 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [isOpen]);
 
   async function handleConfirm() {
     if (isSubmitting) return;
@@ -33,7 +44,7 @@ export function ScannerCheckout({ total, onCharge }: ScannerCheckoutProps) {
     setIsSubmitting(false);
 
     if (ok) {
-      setIsConfirmOpen(false);
+      onClose();
       setPaymentMethod("efectivo");
     }
   }
@@ -46,17 +57,17 @@ export function ScannerCheckout({ total, onCharge }: ScannerCheckoutProps) {
           <strong>{formatCurrency(total)}</strong>
         </div>
 
-        <button type="button" className="piloto-charge-btn" onClick={() => setIsConfirmOpen(true)}>
+        <button type="button" className="piloto-charge-btn" onClick={onOpen}>
           Cobrar
         </button>
       </div>
 
-      {isConfirmOpen ? (
+      {isOpen ? (
         <div className="piloto-modal-overlay" role="dialog" aria-modal="true" aria-label="Confirmar cobro">
           <div className="piloto-modal-card">
             <div className="piloto-modal-card__header">
               <h2>Confirmar cobro</h2>
-              <button type="button" className="piloto-modal-close" onClick={() => setIsConfirmOpen(false)} disabled={isSubmitting}>
+              <button type="button" className="piloto-modal-close" onClick={onClose} disabled={isSubmitting}>
                 Cerrar
               </button>
             </div>
@@ -86,15 +97,16 @@ export function ScannerCheckout({ total, onCharge }: ScannerCheckoutProps) {
             </div>
 
             <div className="piloto-modal-card__actions">
-              <button
-                type="button"
-                className="piloto-button piloto-button--ghost"
-                onClick={() => setIsConfirmOpen(false)}
-                disabled={isSubmitting}
-              >
+              <button type="button" className="piloto-button piloto-button--ghost" onClick={onClose} disabled={isSubmitting}>
                 Cancelar
               </button>
-              <button type="button" className="piloto-button piloto-button--primary" onClick={handleConfirm} disabled={isSubmitting}>
+              <button
+                ref={confirmButtonRef}
+                type="button"
+                className="piloto-button piloto-button--primary"
+                onClick={handleConfirm}
+                disabled={isSubmitting}
+              >
                 {isSubmitting ? "Confirmando..." : "Confirmar"}
               </button>
             </div>

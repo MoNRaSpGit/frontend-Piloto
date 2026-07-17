@@ -4,11 +4,13 @@ type ScannerInputProps = {
   value: string;
   onChange: (value: string) => void;
   onSubmit: (barcode: string) => void;
+  onEmptyEnter: () => void;
   isLoading: boolean;
   error: string;
+  focusSignal: number;
 };
 
-export function ScannerInput({ value, onChange, onSubmit, isLoading, error }: ScannerInputProps) {
+export function ScannerInput({ value, onChange, onSubmit, onEmptyEnter, isLoading, error, focusSignal }: ScannerInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   // A laser scanner just types into whatever has focus and sends Enter - refocus
@@ -17,12 +19,16 @@ export function ScannerInput({ value, onChange, onSubmit, isLoading, error }: Sc
     if (!isLoading) {
       inputRef.current?.focus();
     }
-  }, [isLoading]);
+  }, [isLoading, focusSignal]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const trimmed = value.trim();
-    if (!trimmed) return;
+    if (!trimmed) {
+      // Enter con el input vacio = "camino feliz": ir directo a confirmar el cobro.
+      onEmptyEnter();
+      return;
+    }
     onSubmit(trimmed);
   }
 
