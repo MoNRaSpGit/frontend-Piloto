@@ -10,9 +10,13 @@ type ScannerInputProps = {
 export function ScannerInput({ value, onChange, onSubmit, isLoading }: ScannerInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // A laser scanner just types into whatever has focus and sends Enter - refocus
+  // after every lookup so the next scan lands in the field without touching the mouse.
   useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+    if (!isLoading) {
+      inputRef.current?.focus();
+    }
+  }, [isLoading]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
