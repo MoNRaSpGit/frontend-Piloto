@@ -21,7 +21,14 @@ async function readJson<T>(response: Response): Promise<T> {
     }
 
     const fallbackText = await response.text().catch(() => "");
-    throw new Error(fallbackText || `HTTP ${response.status}`);
+    let parsedMessage: string | undefined;
+    try {
+      const parsed = JSON.parse(fallbackText) as { message?: string | string[] };
+      parsedMessage = Array.isArray(parsed.message) ? parsed.message[0] : parsed.message;
+    } catch {
+      // El cuerpo no era JSON, se usa el texto crudo como fallback.
+    }
+    throw new Error(parsedMessage || fallbackText || `HTTP ${response.status}`);
   }
 
   return (await response.json()) as T;
@@ -44,6 +51,20 @@ export async function findProductByBarcode(barcode: string): Promise<ProductResp
   return result;
 }
 
+export async function createProduct(barcode: string, name: string, price: number): Promise<ProductResponse> {
+  const response = await fetch(`${API_BASE_URL}/piloto/products`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ barcode: normalizeBarcode(barcode), name, price })
+  });
+
+  const result = await readJson<ProductResponse>(response);
+  setCachedLookup(`${API_BASE_URL}::${normalizeBarcode(barcode)}`, result.item);
+  return result;
+}
+
 export async function createSale(items: CartItem[], paymentMethod: PilotoPaymentMethod) {
   const response = await fetch(`${API_BASE_URL}/piloto/sales`, {
     method: "POST",
@@ -53,7 +74,7 @@ export async function createSale(items: CartItem[], paymentMethod: PilotoPayment
     body: JSON.stringify({
       paymentMethod,
       items: items.map((item) => ({
-        productId: item.catalogProductId,
+        productId: item.productId,
         name: item.name,
         price: item.price,
         quantity: item.quantity,

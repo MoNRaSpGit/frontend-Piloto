@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { createSale, findProductByBarcode, normalizeBarcode } from "./piloto.api";
+import { createProduct, createSale, findProductByBarcode, normalizeBarcode } from "./piloto.api";
 import { ScannerCart } from "./components/ScannerCart";
 import { ScannerCheckout } from "./components/ScannerCheckout";
 import { ScannerInput } from "./components/ScannerInput";
@@ -18,8 +18,7 @@ export function PilotoHomePage() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [focusSignal, setFocusSignal] = useState(0);
   const [quickAddBarcode, setQuickAddBarcode] = useState<string | null>(null);
-  const { cartItems, lastScannedProductId, addProduct, addManualItem, addOne, removeOne, updateItem, clearCart, total } =
-    usePilotoCart();
+  const { cartItems, lastScannedProductId, addProduct, addOne, removeOne, updateItem, clearCart, total } = usePilotoCart();
 
   // Al cerrarse el modal de cobro o el de alta rapida, devolver el foco
   // al input del escaner para seguir escaneando sin tocar el mouse.
@@ -54,10 +53,18 @@ export function PilotoHomePage() {
     }
   }
 
-  function handleQuickAddConfirm(name: string, price: number) {
-    if (!quickAddBarcode) return;
-    addManualItem(quickAddBarcode, name, price);
-    setQuickAddBarcode(null);
+  async function handleQuickAddConfirm(name: string, price: number) {
+    if (!quickAddBarcode) return false;
+
+    try {
+      const response = await createProduct(quickAddBarcode, name, price);
+      addProduct(response.item);
+      setQuickAddBarcode(null);
+      return true;
+    } catch (createError) {
+      toast.error(createError instanceof Error ? createError.message : "No se pudo guardar el producto.");
+      return false;
+    }
   }
 
   async function handleCharge(paymentMethod: PilotoPaymentMethod) {
