@@ -55,8 +55,3 @@ export function setCachedLookup(cacheKey: string, product: PilotoProduct) {
   cache.set(cacheKey, { cachedAt: Date.now(), product });
   persistLookupCache();
 }
-
-export function clearProductLookupCache() {
-  inMemoryLookupCache = new Map();
-  writeJsonStorage(PRODUCT_LOOKUP_CACHE_KEY, {});
-}

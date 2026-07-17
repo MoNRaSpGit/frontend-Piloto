@@ -54,12 +54,6 @@ input {
   font-size: clamp(1.6rem, 5vw, 2.2rem);
 }
 
-.piloto-note {
-  margin: 0;
-  color: #475569;
-  line-height: 1.5;
-}
-
 .piloto-scanner-dominant {
   padding: 16px;
   border: 1px solid #dbe4ee;
