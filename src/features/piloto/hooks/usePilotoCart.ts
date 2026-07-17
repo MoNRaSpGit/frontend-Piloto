@@ -38,6 +38,12 @@ export function usePilotoCart() {
     );
   }
 
+  function updateItem(productId: number, changes: { name: string; price: number }) {
+    setCartItems((current) =>
+      current.map((item) => (item.productId === productId ? { ...item, name: changes.name, price: changes.price } : item))
+    );
+  }
+
   function clearCart() {
     setCartItems([]);
     setLastScannedProductId(null);
@@ -45,5 +51,5 @@ export function usePilotoCart() {
 
   const total = useMemo(() => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0), [cartItems]);
 
-  return { cartItems, lastScannedProductId, addProduct, addOne, removeOne, clearCart, total };
+  return { cartItems, lastScannedProductId, addProduct, addOne, removeOne, updateItem, clearCart, total };
 }

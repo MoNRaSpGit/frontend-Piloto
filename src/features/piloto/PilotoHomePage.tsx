@@ -11,7 +11,7 @@ export function PilotoHomePage() {
   const [barcodeInput, setBarcodeInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const { cartItems, lastScannedProductId, addProduct, addOne, removeOne, clearCart, total } = usePilotoCart();
+  const { cartItems, lastScannedProductId, addProduct, addOne, removeOne, updateItem, clearCart, total } = usePilotoCart();
 
   async function handleSearch(barcode: string) {
     setIsLoading(true);
@@ -51,7 +51,13 @@ export function PilotoHomePage() {
 
       {cartItems.length ? (
         <>
-          <ScannerCart items={cartItems} lastScannedProductId={lastScannedProductId} onAddOne={addOne} onRemoveOne={removeOne} />
+          <ScannerCart
+            items={cartItems}
+            lastScannedProductId={lastScannedProductId}
+            onAddOne={addOne}
+            onRemoveOne={removeOne}
+            onEdit={updateItem}
+          />
           <ScannerCheckout total={total} onCharge={handleCharge} />
         </>
       ) : (
