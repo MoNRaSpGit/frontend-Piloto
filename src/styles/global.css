@@ -27,7 +27,7 @@ input {
 
 .piloto-shell {
   min-height: 100vh;
-  width: min(640px, 100%);
+  width: min(960px, 100%);
   margin: 0 auto;
   padding: 24px 16px 48px;
   display: grid;
