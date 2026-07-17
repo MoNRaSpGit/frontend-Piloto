@@ -118,17 +118,6 @@ input {
   text-align: center;
 }
 
-.piloto-product-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 16px;
-  border: 1px solid #dbe4ee;
-  border-radius: 14px;
-  background: #ffffff;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
-}
-
 .piloto-thumb-frame {
   flex-shrink: 0;
   width: 72px;
@@ -180,16 +169,247 @@ input {
   background-color: rgba(25, 135, 84, 0.18);
 }
 
-.piloto-product-row__meta {
-  display: flex;
-  flex-wrap: wrap;
+.piloto-cart-panel {
+  display: grid;
   gap: 10px;
-  margin-top: 6px;
-  font-size: 0.82rem;
-  color: #64748b;
 }
 
-.piloto-status-flag {
-  color: #b91c1c;
+.piloto-cart-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid transparent;
+}
+
+.piloto-cart-row.is-latest {
+  background-color: rgba(107, 114, 128, 0.18);
+  border-color: rgba(107, 114, 128, 0.24);
+}
+
+.piloto-cart-row__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+.piloto-cart-row__totals {
+  flex-shrink: 0;
+  display: grid;
+  gap: 2px;
+  text-align: right;
+  font-size: 0.95rem;
+}
+
+.piloto-cart-row__qty {
+  color: #64748b;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.piloto-cart-row__remove {
+  flex-shrink: 0;
+  min-width: 30px;
+  min-height: 30px;
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #111;
   font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.piloto-cart-row__remove:hover {
+  background: #f8f9fa;
+  border-color: #adb5bd;
+}
+
+.piloto-checkout {
+  padding: 16px 18px;
+  border: 1px solid #dbe4ee;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
+}
+
+.piloto-checkout__total-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.piloto-checkout__total-row span {
+  font-weight: 700;
+  color: #212529;
+}
+
+.piloto-checkout__total-row strong {
+  font-size: 1.55rem;
+  font-weight: 800;
+  line-height: 1;
+  color: #111;
+}
+
+.piloto-charge-btn {
+  width: 100%;
+  min-height: 60px;
+  padding: 0.75rem 2rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+  background-color: #111;
+  border: 1px solid #111;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.piloto-charge-btn:hover {
+  background-color: #000;
+}
+
+.piloto-modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1050;
+}
+
+.piloto-modal-card {
+  width: 100%;
+  max-width: 480px;
+  border-radius: 14px;
+  background: #fff;
+  padding: 1.1rem 1.1rem 1.4rem;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+.piloto-modal-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.9rem;
+}
+
+.piloto-modal-card__header h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.piloto-modal-close {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.piloto-modal-card__total-label {
+  margin: 0;
+  color: #6c757d;
+}
+
+.piloto-modal-card__total {
+  margin: 0 0 1.1rem;
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
+.piloto-modal-card__label {
+  margin: 0 0 0.5rem;
+  color: #6c757d;
+}
+
+.piloto-payment-grid {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 1.1rem;
+}
+
+.piloto-payment-btn {
+  position: relative;
+  min-height: 58px;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  padding: 0.7rem 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.piloto-payment-btn--cash {
+  background: linear-gradient(180deg, #f3fbf5 0%, #dcf5e4 100%);
+  color: #1b5a33;
+}
+
+.piloto-payment-btn--card {
+  background: linear-gradient(180deg, #f2f8ff 0%, #dceaff 100%);
+  color: #18467d;
+}
+
+.piloto-payment-btn.is-active {
+  border-color: rgba(17, 24, 39, 0.82);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.12);
+}
+
+.piloto-payment-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.piloto-modal-card__actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.piloto-button {
+  flex: 1;
+  min-height: 46px;
+  border-radius: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.piloto-button--ghost {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #0f172a;
+}
+
+.piloto-button--primary {
+  border: 1px solid #111;
+  background: #111;
+  color: #fff;
+}
+
+.piloto-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 420px) {
+  .piloto-cart-row__totals {
+    font-size: 0.85rem;
+  }
 }

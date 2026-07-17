@@ -11,3 +11,21 @@ export type PilotoProduct = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type PilotoPaymentMethod = "efectivo" | "tarjeta";
+
+export type PilotoSale = {
+  id: number;
+  totalAmount: number;
+  itemsCount: number;
+  paymentMethod: PilotoPaymentMethod;
+  createdAt: string;
+};
+
+export type CartItem = {
+  productId: number;
+  name: string;
+  price: number;
+  quantity: number;
+  imageUrl: string | null;
+};

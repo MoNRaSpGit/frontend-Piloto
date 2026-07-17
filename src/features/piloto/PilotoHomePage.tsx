@@ -1,14 +1,17 @@
 import { useState } from "react";
-import { findProductByBarcode } from "./piloto.api";
-import { ProductResultCard } from "./components/ProductResultCard";
+import { toast } from "react-toastify";
+import { createSale, findProductByBarcode } from "./piloto.api";
+import { ScannerCart } from "./components/ScannerCart";
+import { ScannerCheckout } from "./components/ScannerCheckout";
 import { ScannerInput } from "./components/ScannerInput";
-import type { PilotoProduct } from "./piloto.types";
+import { usePilotoCart } from "./hooks/usePilotoCart";
+import type { PilotoPaymentMethod } from "./piloto.types";
 
 export function PilotoHomePage() {
   const [barcodeInput, setBarcodeInput] = useState("");
-  const [product, setProduct] = useState<PilotoProduct | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const { cartItems, lastScannedProductId, addProduct, addOne, removeOne, clearCart, total } = usePilotoCart();
 
   async function handleSearch(barcode: string) {
     setIsLoading(true);
@@ -16,13 +19,24 @@ export function PilotoHomePage() {
 
     try {
       const response = await findProductByBarcode(barcode);
-      setProduct(response.item);
+      addProduct(response.item);
     } catch (searchError) {
-      setProduct(null);
       setError(searchError instanceof Error ? searchError.message : "No se pudo buscar el producto.");
     } finally {
       setIsLoading(false);
       setBarcodeInput("");
+    }
+  }
+
+  async function handleCharge(paymentMethod: PilotoPaymentMethod) {
+    try {
+      await createSale(cartItems, paymentMethod);
+      clearCart();
+      toast.success("Venta confirmada.");
+      return true;
+    } catch (chargeError) {
+      toast.error(chargeError instanceof Error ? chargeError.message : "No se pudo confirmar la venta.");
+      return false;
     }
   }
 
@@ -35,11 +49,14 @@ export function PilotoHomePage() {
 
       <ScannerInput value={barcodeInput} onChange={setBarcodeInput} onSubmit={handleSearch} isLoading={isLoading} error={error} />
 
-      {product ? (
-        <ProductResultCard product={product} />
+      {cartItems.length ? (
+        <>
+          <ScannerCart items={cartItems} lastScannedProductId={lastScannedProductId} onAddOne={addOne} onRemoveOne={removeOne} />
+          <ScannerCheckout total={total} onCharge={handleCharge} />
+        </>
       ) : (
         <section className="piloto-empty-state">
-          <p>Todavia no buscaste ningun producto.</p>
+          <p>Todavia no escaneaste ningun producto.</p>
         </section>
       )}
     </main>

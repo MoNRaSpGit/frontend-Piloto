@@ -1,8 +1,12 @@
 import { API_BASE_URL } from "../../shared/config/api";
-import type { PilotoProduct } from "./piloto.types";
+import type { CartItem, PilotoPaymentMethod, PilotoProduct, PilotoSale } from "./piloto.types";
 
 type ProductResponse = {
   item: PilotoProduct;
+};
+
+type SaleResponse = {
+  item: PilotoSale;
 };
 
 function normalizeBarcode(barcode: string) {
@@ -26,4 +30,25 @@ export async function findProductByBarcode(barcode: string) {
   const normalizedBarcode = normalizeBarcode(barcode);
   const response = await fetch(`${API_BASE_URL}/piloto/products/barcode/${encodeURIComponent(normalizedBarcode)}`);
   return readJson<ProductResponse>(response);
+}
+
+export async function createSale(items: CartItem[], paymentMethod: PilotoPaymentMethod) {
+  const response = await fetch(`${API_BASE_URL}/piloto/sales`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      paymentMethod,
+      items: items.map((item) => ({
+        productId: item.productId,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        imageUrl: item.imageUrl
+      }))
+    })
+  });
+
+  return readJson<SaleResponse>(response);
 }
