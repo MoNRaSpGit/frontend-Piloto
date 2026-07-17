@@ -5,7 +5,7 @@ export default defineConfig(({ mode }) => {
   const isGithubPagesBuild = mode === "github-pages";
 
   return {
-    base: isGithubPagesBuild ? "/frontend-piloto/" : "/",
+    base: isGithubPagesBuild ? "/frontend-Piloto/" : "/",
     plugins: [react()]
   };
 });
