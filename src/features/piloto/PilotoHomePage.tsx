@@ -8,11 +8,11 @@ export function PilotoHomePage() {
   const [barcodeInput, setBarcodeInput] = useState("");
   const [product, setProduct] = useState<PilotoProduct | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState("");
 
   async function handleSearch(barcode: string) {
     setIsLoading(true);
-    setError(null);
+    setError("");
 
     try {
       const response = await findProductByBarcode(barcode);
@@ -31,13 +31,9 @@ export function PilotoHomePage() {
       <header className="piloto-header">
         <p className="piloto-kicker">Piloto</p>
         <h1>Escaneo de productos</h1>
-        <p className="piloto-note">Escaneá o escribí un codigo de barras para ver los datos del producto.</p>
       </header>
 
-      <section className="piloto-card">
-        <ScannerInput value={barcodeInput} onChange={setBarcodeInput} onSubmit={handleSearch} isLoading={isLoading} />
-        {error ? <p className="piloto-error">{error}</p> : null}
-      </section>
+      <ScannerInput value={barcodeInput} onChange={setBarcodeInput} onSubmit={handleSearch} isLoading={isLoading} error={error} />
 
       {product ? (
         <ProductResultCard product={product} />

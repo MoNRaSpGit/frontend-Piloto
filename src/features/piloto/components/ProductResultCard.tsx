@@ -12,30 +12,35 @@ function formatCurrency(amount: number) {
   }).format(amount);
 }
 
+function ProductThumb({ name, imageUrl }: { name: string; imageUrl: string | null }) {
+  if (imageUrl) {
+    return (
+      <div className="piloto-thumb-frame">
+        <img src={imageUrl} alt={name} loading="lazy" className="piloto-thumb" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="piloto-thumb-frame piloto-thumb-placeholder">
+      <span>IMG</span>
+    </div>
+  );
+}
+
 export function ProductResultCard({ product }: ProductResultCardProps) {
   return (
-    <article className="piloto-product-card">
-      <div className="piloto-product-card__image">
-        {product.imageUrl ? <img src={product.imageUrl} alt={product.name} /> : <span>Sin imagen</span>}
-      </div>
+    <article className="piloto-product-row">
+      <ProductThumb name={product.name} imageUrl={product.imageUrl} />
 
-      <div className="piloto-product-card__info">
-        <h2>{product.name}</h2>
-        <p className="piloto-product-card__barcode">Codigo: {product.barcode}</p>
+      <div className="piloto-product-row__info">
+        <div className="piloto-product-name">{product.name}</div>
+        <div className="piloto-price-badge">{formatCurrency(product.price)}</div>
 
-        <div className="piloto-product-card__meta">
-          <div>
-            <span>Precio</span>
-            <strong>{formatCurrency(product.price)}</strong>
-          </div>
-          <div>
-            <span>Stock</span>
-            <strong>{product.stock}</strong>
-          </div>
-          <div>
-            <span>Estado</span>
-            <strong>{product.status === "active" ? "Activo" : "Inactivo"}</strong>
-          </div>
+        <div className="piloto-product-row__meta">
+          <span>Codigo {product.barcode}</span>
+          <span>Stock {product.stock}</span>
+          {product.status === "inactive" ? <span className="piloto-status-flag">Inactivo</span> : null}
         </div>
       </div>
     </article>

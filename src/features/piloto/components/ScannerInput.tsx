@@ -5,9 +5,10 @@ type ScannerInputProps = {
   onChange: (value: string) => void;
   onSubmit: (barcode: string) => void;
   isLoading: boolean;
+  error: string;
 };
 
-export function ScannerInput({ value, onChange, onSubmit, isLoading }: ScannerInputProps) {
+export function ScannerInput({ value, onChange, onSubmit, isLoading, error }: ScannerInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   // A laser scanner just types into whatever has focus and sends Enter - refocus
@@ -26,20 +27,23 @@ export function ScannerInput({ value, onChange, onSubmit, isLoading }: ScannerIn
   }
 
   return (
-    <form className="piloto-scanner-form" onSubmit={handleSubmit}>
-      <input
-        ref={inputRef}
-        className="piloto-scanner-input"
-        type="text"
-        inputMode="numeric"
-        autoComplete="off"
-        placeholder="Escanear o escribir codigo de barras"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-      />
-      <button type="submit" className="piloto-scanner-submit" disabled={isLoading || !value.trim()}>
-        {isLoading ? "Buscando..." : "Buscar"}
-      </button>
-    </form>
+    <div className="piloto-scanner-dominant">
+      <form onSubmit={handleSubmit}>
+        <input
+          ref={inputRef}
+          className="piloto-scanner-input"
+          type="text"
+          inputMode="numeric"
+          autoComplete="off"
+          placeholder="Escanear aqui"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          disabled={isLoading}
+          autoFocus
+        />
+      </form>
+      {isLoading ? <p className="piloto-scanner-status">Buscando producto...</p> : null}
+      {error ? <p className="piloto-scanner-status piloto-scanner-status--error">{error}</p> : null}
+    </div>
   );
 }

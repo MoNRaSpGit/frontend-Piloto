@@ -60,53 +60,51 @@ input {
   line-height: 1.5;
 }
 
-.piloto-card {
-  padding: 20px;
+.piloto-scanner-dominant {
+  padding: 16px;
   border: 1px solid #dbe4ee;
-  border-radius: 18px;
+  border-radius: 14px;
   background: #ffffff;
-  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.06);
-}
-
-.piloto-scanner-form {
-  display: flex;
-  gap: 10px;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
 }
 
 .piloto-scanner-input {
-  flex: 1;
-  min-height: 52px;
-  border-radius: 14px;
-  border: 1px solid #cbd5e1;
-  background: #f8fafc;
+  width: 100%;
+  min-height: 64px;
+  border-radius: 10px;
+  border: 2px solid #cbd5e1;
+  background: #ffffff;
   padding: 0 16px;
-  font-size: 16px;
+  font-size: 1.2rem;
+  font-weight: 600;
   color: #0f172a;
+  text-align: center;
+}
+
+.piloto-scanner-input::placeholder {
+  color: #495057;
+  opacity: 1;
 }
 
 .piloto-scanner-input:focus {
-  outline: 2px solid rgba(59, 130, 246, 0.24);
-  border-color: #60a5fa;
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.14);
 }
 
-.piloto-scanner-submit {
-  min-height: 52px;
-  padding: 0 20px;
-  border: 0;
-  border-radius: 14px;
-  font-weight: 800;
-  color: #fff;
-  background: linear-gradient(135deg, #0f172a, #2563eb);
-  cursor: pointer;
+.piloto-scanner-input:disabled {
+  background: #f8fafc;
+  opacity: 0.7;
 }
 
-.piloto-scanner-submit:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.piloto-scanner-status {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+  color: #64748b;
+  text-align: center;
 }
 
-.piloto-error {
-  margin: 12px 0 0;
+.piloto-scanner-status--error {
   color: #b91c1c;
   font-weight: 700;
 }
@@ -120,91 +118,78 @@ input {
   text-align: center;
 }
 
-.piloto-product-card {
+.piloto-product-row {
   display: flex;
-  gap: 18px;
-  padding: 20px;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
   border: 1px solid #dbe4ee;
-  border-radius: 18px;
-  background: #ffffff;
-  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.06);
-}
-
-.piloto-product-card__image {
-  width: 120px;
-  height: 120px;
-  flex-shrink: 0;
   border-radius: 14px;
-  background: #f1f5f9;
-  display: grid;
-  place-items: center;
-  color: #94a3b8;
-  font-size: 12px;
-  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
 }
 
-.piloto-product-card__image img {
+.piloto-thumb-frame {
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+  border: 1px solid #dee2e6;
+  background: #ffffff;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.piloto-thumb {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.piloto-product-card__info {
-  flex: 1;
-  display: grid;
-  gap: 8px;
-  align-content: start;
+.piloto-thumb-placeholder {
+  background: linear-gradient(145deg, #f2f4f6, #e9ecef);
 }
 
-.piloto-product-card__info h2 {
-  margin: 0;
-  font-size: 1.3rem;
-}
-
-.piloto-product-card__barcode {
-  margin: 0;
-  color: #64748b;
-}
-
-.piloto-product-card__meta {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 8px;
-}
-
-.piloto-product-card__meta > div {
-  padding: 10px;
-  border-radius: 12px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  display: grid;
-  gap: 4px;
-}
-
-.piloto-product-card__meta span {
-  font-size: 11px;
-  font-weight: 800;
+.piloto-thumb-placeholder span {
+  font-size: 0.7rem;
+  font-weight: 700;
   letter-spacing: 0.06em;
-  text-transform: uppercase;
+  color: #6c757d;
+}
+
+.piloto-product-row__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.piloto-product-name {
+  font-size: 1.04rem;
+  font-weight: 600;
+}
+
+.piloto-price-badge {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 0.16rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0f5132;
+  background-color: rgba(25, 135, 84, 0.18);
+}
+
+.piloto-product-row__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+  font-size: 0.82rem;
   color: #64748b;
 }
 
-.piloto-product-card__meta strong {
-  font-size: 1.1rem;
-}
-
-@media (max-width: 480px) {
-  .piloto-product-card {
-    flex-direction: column;
-  }
-
-  .piloto-product-card__image {
-    width: 100%;
-    height: 160px;
-  }
-
-  .piloto-scanner-form {
-    flex-direction: column;
-  }
+.piloto-status-flag {
+  color: #b91c1c;
+  font-weight: 700;
 }
