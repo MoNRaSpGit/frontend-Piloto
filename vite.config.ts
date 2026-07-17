@@ -6,6 +6,10 @@ export default defineConfig(({ mode }) => {
 
   return {
     base: isGithubPagesBuild ? "/frontend-Piloto/" : "/",
-    plugins: [react()]
+    plugins: [react()],
+    server: {
+      port: 5190,
+      strictPort: true
+    }
   };
 });
