@@ -1,9 +1,10 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { CartItem, PilotoProduct } from "../piloto.types";
 
 export function usePilotoCart() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [lastScannedProductId, setLastScannedProductId] = useState<number | null>(null);
+  const nextManualIdRef = useRef(-1);
 
   function addProduct(product: PilotoProduct) {
     setLastScannedProductId(product.id);
@@ -23,6 +24,16 @@ export function usePilotoCart() {
       };
       return [nextItem, ...current];
     });
+  }
+
+  // Producto sin codigo (ej: fruta/verdura suelta): siempre crea una linea nueva,
+  // nunca suma cantidad a una existente, y jamas se guarda como producto real.
+  function addManualItem(price: number) {
+    const productId = nextManualIdRef.current;
+    nextManualIdRef.current -= 1;
+
+    setLastScannedProductId(productId);
+    setCartItems((current) => [{ productId, name: "Producto Manual", price, quantity: 1, imageUrl: null }, ...current]);
   }
 
   function addOne(productId: number) {
@@ -51,5 +62,5 @@ export function usePilotoCart() {
 
   const total = useMemo(() => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0), [cartItems]);
 
-  return { cartItems, lastScannedProductId, addProduct, addOne, removeOne, updateItem, clearCart, total };
+  return { cartItems, lastScannedProductId, addProduct, addManualItem, addOne, removeOne, updateItem, clearCart, total };
 }

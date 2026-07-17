@@ -103,6 +103,22 @@ input {
   font-weight: 700;
 }
 
+.piloto-manual-btn {
+  width: 100%;
+  min-height: 48px;
+  border: 1px dashed #94a3b8;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #334155;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.piloto-manual-btn:hover {
+  background: #f8fafc;
+  border-color: #64748b;
+}
+
 .piloto-empty-state {
   padding: 28px;
   border: 1px dashed #cbd5e1;

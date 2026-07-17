@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { createProduct, createSale, findProductByBarcode, normalizeBarcode } from "./piloto.api";
+import { ManualProductModal } from "./components/ManualProductModal";
 import { ScannerCart } from "./components/ScannerCart";
 import { ScannerCheckout } from "./components/ScannerCheckout";
 import { ScannerInput } from "./components/ScannerInput";
@@ -18,15 +19,17 @@ export function PilotoHomePage() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [focusSignal, setFocusSignal] = useState(0);
   const [quickAddBarcode, setQuickAddBarcode] = useState<string | null>(null);
-  const { cartItems, lastScannedProductId, addProduct, addOne, removeOne, updateItem, clearCart, total } = usePilotoCart();
+  const [isManualModalOpen, setIsManualModalOpen] = useState(false);
+  const { cartItems, lastScannedProductId, addProduct, addManualItem, addOne, removeOne, updateItem, clearCart, total } =
+    usePilotoCart();
 
-  // Al cerrarse el modal de cobro o el de alta rapida, devolver el foco
-  // al input del escaner para seguir escaneando sin tocar el mouse.
+  // Al cerrarse cualquier modal, devolver el foco al input del escaner
+  // para seguir escaneando sin tocar el mouse.
   useEffect(() => {
-    if (!isCheckoutOpen && !quickAddBarcode) {
+    if (!isCheckoutOpen && !quickAddBarcode && !isManualModalOpen) {
       setFocusSignal((signal) => signal + 1);
     }
-  }, [isCheckoutOpen, quickAddBarcode]);
+  }, [isCheckoutOpen, quickAddBarcode, isManualModalOpen]);
 
   function handleEmptyEnter() {
     if (!cartItems.length) return;
@@ -65,6 +68,11 @@ export function PilotoHomePage() {
       toast.error(createError instanceof Error ? createError.message : "No se pudo guardar el producto.");
       return false;
     }
+  }
+
+  function handleManualConfirm(price: number) {
+    addManualItem(price);
+    setIsManualModalOpen(false);
   }
 
   async function handleCharge(paymentMethod: PilotoPaymentMethod) {
@@ -111,6 +119,10 @@ export function PilotoHomePage() {
         focusSignal={focusSignal}
       />
 
+      <button type="button" className="piloto-manual-btn" onClick={() => setIsManualModalOpen(true)}>
+        Producto Manual
+      </button>
+
       {cartItems.length ? (
         <>
           <ScannerCart
@@ -140,6 +152,10 @@ export function PilotoHomePage() {
           onClose={() => setQuickAddBarcode(null)}
           onConfirm={handleQuickAddConfirm}
         />
+      ) : null}
+
+      {isManualModalOpen ? (
+        <ManualProductModal onClose={() => setIsManualModalOpen(false)} onConfirm={handleManualConfirm} />
       ) : null}
     </main>
   );

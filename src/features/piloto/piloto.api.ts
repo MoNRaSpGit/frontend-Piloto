@@ -74,7 +74,9 @@ export async function createSale(items: CartItem[], paymentMethod: PilotoPayment
     body: JSON.stringify({
       paymentMethod,
       items: items.map((item) => ({
-        productId: item.productId,
+        // Los ids negativos son lineas manuales locales (sin codigo, nunca guardadas
+        // como producto real): el backend los recibe sin productId.
+        productId: item.productId > 0 ? item.productId : null,
         name: item.name,
         price: item.price,
         quantity: item.quantity,
