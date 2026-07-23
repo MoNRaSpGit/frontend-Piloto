@@ -1,19 +1,28 @@
 import { printSaleTicketByQz } from "./piloto.qzPrint";
 import { printSaleTicketByRawBt } from "./piloto.rawbtPrint";
 import type { SaleTicket } from "./piloto.ticketFormat";
+import { printSaleTicketByWebUsb } from "./piloto.webusbPrint";
 
 export type { SaleTicket };
 
-function isAndroid() {
-  return typeof navigator !== "undefined" && /android/i.test(navigator.userAgent);
-}
-
-// En la tablet (Android) se imprime por RawBT via USB. En cualquier otro
-// dispositivo (PC de escritorio) se usa QZ Tray, que es lo que ya andaba ahi.
+// Orden: WebUSB primero (impresora por USB sin ningun software de por
+// medio, lo que ya andaba en la tablet), QZ Tray como respaldo (PC de
+// escritorio), y RawBT como ultimo recurso si ninguno de los dos anda.
 export async function printSaleTicket(ticket: SaleTicket) {
-  if (isAndroid()) {
-    return printSaleTicketByRawBt(ticket);
+  try {
+    await printSaleTicketByWebUsb(ticket);
+    return { method: "webusb" as const };
+  } catch (webUsbError) {
+    console.warn("[piloto-print] WebUSB fallo, probando QZ.", webUsbError);
   }
 
-  return printSaleTicketByQz(ticket);
+  try {
+    await printSaleTicketByQz(ticket);
+    return { method: "qz" as const };
+  } catch (qzError) {
+    console.warn("[piloto-print] QZ fallo, probando RawBT.", qzError);
+  }
+
+  await printSaleTicketByRawBt(ticket);
+  return { method: "rawbt" as const };
 }

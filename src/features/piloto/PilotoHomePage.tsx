@@ -8,6 +8,7 @@ import { ScannerInput } from "./components/ScannerInput";
 import { ScannerQuickAddModal } from "./components/ScannerQuickAddModal";
 import { usePilotoCart } from "./hooks/usePilotoCart";
 import { printSaleTicket } from "./services/piloto.print";
+import { primeUsbPrinterConnection } from "./services/piloto.webusbPrint";
 import type { PilotoPaymentMethod } from "./piloto.types";
 
 const NOT_FOUND_MESSAGE = "Producto no encontrado.";
@@ -22,6 +23,12 @@ export function PilotoHomePage() {
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
   const { cartItems, lastScannedProductId, addProduct, addManualItem, addOne, removeOne, updateItem, clearCart, total } =
     usePilotoCart();
+
+  // Reconecta en silencio la impresora USB ya autorizada en una sesion
+  // anterior (no pide permiso de nuevo, solo la vuelve a encontrar).
+  useEffect(() => {
+    void primeUsbPrinterConnection().catch(() => {});
+  }, []);
 
   // Al cerrarse cualquier modal, devolver el foco al input del escaner
   // para seguir escaneando sin tocar el mouse.
