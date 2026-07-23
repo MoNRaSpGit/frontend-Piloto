@@ -7,7 +7,7 @@ import { ScannerCheckout } from "./components/ScannerCheckout";
 import { ScannerInput } from "./components/ScannerInput";
 import { ScannerQuickAddModal } from "./components/ScannerQuickAddModal";
 import { usePilotoCart } from "./hooks/usePilotoCart";
-import { printSaleTicketByQz } from "./services/piloto.qzPrint";
+import { printSaleTicket } from "./services/piloto.print";
 import type { PilotoPaymentMethod } from "./piloto.types";
 
 const NOT_FOUND_MESSAGE = "Producto no encontrado.";
@@ -84,7 +84,7 @@ export function PilotoHomePage() {
       toast.success("Venta confirmada.");
 
       try {
-        await printSaleTicketByQz({
+        await printSaleTicket({
           externalId: `piloto-${Date.now()}`,
           chargedAtIso: new Date().toISOString(),
           paymentMethod,
