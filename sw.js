@@ -23,6 +23,14 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // app-build.json es lo que usa la app para detectar si hay version nueva:
+  // si se cachea, la comparacion siempre da "igual" contra su propia copia
+  // vieja y el cartel de actualizar nunca aparece. Siempre va a la red.
+  if (request.url.includes("app-build.json")) {
+    event.respondWith(fetch(request));
+    return;
+  }
+
   if (request.mode === "navigate") {
     event.respondWith(fetch(request).catch(() => caches.match(request)));
     return;
