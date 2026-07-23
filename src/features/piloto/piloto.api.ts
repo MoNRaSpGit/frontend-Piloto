@@ -76,10 +76,10 @@ export async function updateProduct(productId: number, name: string, price: numb
 
   const result = await readJson<ProductResponse>(response);
 
-  // El cache de lookup del backend queda al dia solo (se pisa en el mismo
-  // update); el reset ademas limpia cualquier entrada vieja de otro barcode
-  // normalizado que apuntara a este producto antes de la edicion.
-  void fetch(`${API_BASE_URL}/piloto/cache/product-lookup/reset`, { method: "POST" }).catch(() => {});
+  // (Deshabilitado temporalmente: el POST extra a /cache/product-lookup/reset
+  // duplicaba pedidos al backend cuando se editaban muchos productos seguidos
+  // y causaba errores. El PATCH ya refresca el cache de ese producto puntual
+  // del lado del backend, asi que este llamado era redundante igual.)
 
   // El cache local del navegador (localStorage, 12hs) tambien tenia guardada
   // la version vieja del producto: si no se pisa aca, un re-escaneo del mismo
