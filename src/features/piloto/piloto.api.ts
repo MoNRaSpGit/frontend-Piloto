@@ -65,6 +65,25 @@ export async function createProduct(barcode: string, name: string, price: number
   return result;
 }
 
+export async function updateProduct(productId: number, name: string, price: number): Promise<ProductResponse> {
+  const response = await fetch(`${API_BASE_URL}/piloto/products/${productId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ name, price })
+  });
+
+  const result = await readJson<ProductResponse>(response);
+
+  // El cache de lookup del backend queda al dia solo (se pisa en el mismo
+  // update); el reset ademas limpia cualquier entrada vieja de otro barcode
+  // normalizado que apuntara a este producto antes de la edicion.
+  void fetch(`${API_BASE_URL}/piloto/cache/product-lookup/reset`, { method: "POST" }).catch(() => {});
+
+  return result;
+}
+
 export async function createSale(items: CartItem[], paymentMethod: PilotoPaymentMethod) {
   const response = await fetch(`${API_BASE_URL}/piloto/sales`, {
     method: "POST",

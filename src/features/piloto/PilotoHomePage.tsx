@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { createProduct, createSale, findProductByBarcode, normalizeBarcode } from "./piloto.api";
+import { createProduct, createSale, findProductByBarcode, normalizeBarcode, updateProduct } from "./piloto.api";
 import { ManualProductModal } from "./components/ManualProductModal";
 import { ScannerCart } from "./components/ScannerCart";
 import { ScannerCheckout } from "./components/ScannerCheckout";
@@ -77,6 +77,25 @@ export function PilotoHomePage() {
     }
   }
 
+  async function handleEditCartItem(productId: number, changes: { name: string; price: number }) {
+    // Ids negativos son lineas manuales locales (sin producto real en el
+    // catalogo): solo se actualiza el carrito, no hay nada que guardar en la BD.
+    if (productId <= 0) {
+      updateItem(productId, changes);
+      return true;
+    }
+
+    try {
+      await updateProduct(productId, changes.name, changes.price);
+      updateItem(productId, changes);
+      toast.success("Producto actualizado.");
+      return true;
+    } catch (updateError) {
+      toast.error(updateError instanceof Error ? updateError.message : "No se pudo guardar el producto.");
+      return false;
+    }
+  }
+
   function handleManualConfirm(price: number) {
     addManualItem(price);
     setIsManualModalOpen(false);
@@ -137,7 +156,7 @@ export function PilotoHomePage() {
             lastScannedProductId={lastScannedProductId}
             onAddOne={addOne}
             onRemoveOne={removeOne}
-            onEdit={updateItem}
+            onEdit={handleEditCartItem}
           />
           <ScannerCheckout
             total={total}

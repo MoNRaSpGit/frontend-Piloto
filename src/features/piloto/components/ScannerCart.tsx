@@ -6,7 +6,7 @@ type ScannerCartProps = {
   lastScannedProductId: number | null;
   onAddOne: (productId: number) => void;
   onRemoveOne: (productId: number) => void;
-  onEdit: (productId: number, changes: { name: string; price: number }) => void;
+  onEdit: (productId: number, changes: { name: string; price: number }) => Promise<boolean>;
 };
 
 function formatCurrency(amount: number) {
@@ -40,11 +40,12 @@ function EditItemModal({
 }: {
   item: CartItem;
   onClose: () => void;
-  onSave: (changes: { name: string; price: number }) => void;
+  onSave: (changes: { name: string; price: number }) => Promise<boolean>;
 }) {
   const [name, setName] = useState(item.name);
   const [price, setPrice] = useState(String(item.price));
   const [error, setError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     setName(item.name);
@@ -52,7 +53,7 @@ function EditItemModal({
     setError("");
   }, [item]);
 
-  function handleSave() {
+  async function handleSave() {
     const trimmedName = name.trim();
     const parsedPrice = Number(price.replace(",", "."));
 
@@ -65,8 +66,16 @@ function EditItemModal({
       return;
     }
 
-    onSave({ name: trimmedName, price: parsedPrice });
-    onClose();
+    setError("");
+    setIsSaving(true);
+    const ok = await onSave({ name: trimmedName, price: parsedPrice });
+    setIsSaving(false);
+
+    if (ok) {
+      onClose();
+    } else {
+      setError("No se pudo guardar el cambio. Intenta de nuevo.");
+    }
   }
 
   return (
@@ -74,29 +83,29 @@ function EditItemModal({
       <div className="piloto-modal-card">
         <div className="piloto-modal-card__header">
           <h2>Editar producto</h2>
-          <button type="button" className="piloto-modal-close" onClick={onClose}>
+          <button type="button" className="piloto-modal-close" onClick={onClose} disabled={isSaving}>
             Cerrar
           </button>
         </div>
 
         <label className="piloto-modal-field">
           <span>Nombre</span>
-          <input value={name} onChange={(event) => setName(event.target.value)} />
+          <input value={name} onChange={(event) => setName(event.target.value)} disabled={isSaving} />
         </label>
 
         <label className="piloto-modal-field">
           <span>Precio</span>
-          <input value={price} onChange={(event) => setPrice(event.target.value)} inputMode="decimal" />
+          <input value={price} onChange={(event) => setPrice(event.target.value)} inputMode="decimal" disabled={isSaving} />
         </label>
 
         {error ? <p className="piloto-scanner-status piloto-scanner-status--error">{error}</p> : null}
 
         <div className="piloto-modal-card__actions">
-          <button type="button" className="piloto-button piloto-button--ghost" onClick={onClose}>
+          <button type="button" className="piloto-button piloto-button--ghost" onClick={onClose} disabled={isSaving}>
             Cancelar
           </button>
-          <button type="button" className="piloto-button piloto-button--primary" onClick={handleSave}>
-            Guardar
+          <button type="button" className="piloto-button piloto-button--primary" onClick={handleSave} disabled={isSaving}>
+            {isSaving ? "Guardando..." : "Guardar"}
           </button>
         </div>
       </div>
