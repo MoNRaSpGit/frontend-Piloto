@@ -81,6 +81,11 @@ export async function updateProduct(productId: number, name: string, price: numb
   // normalizado que apuntara a este producto antes de la edicion.
   void fetch(`${API_BASE_URL}/piloto/cache/product-lookup/reset`, { method: "POST" }).catch(() => {});
 
+  // El cache local del navegador (localStorage, 12hs) tambien tenia guardada
+  // la version vieja del producto: si no se pisa aca, un re-escaneo del mismo
+  // codigo seguia mostrando el nombre/precio de antes de editar.
+  setCachedLookup(`${API_BASE_URL}::${normalizeBarcode(result.item.barcode)}`, result.item);
+
   return result;
 }
 
