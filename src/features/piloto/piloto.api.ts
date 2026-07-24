@@ -1,5 +1,4 @@
 import { API_BASE_URL } from "../../shared/config/api";
-import { getCachedLookup, setCachedLookup } from "./piloto.lookupCache";
 import type { CartItem, PilotoPaymentMethod, PilotoProduct, PilotoSale } from "./piloto.types";
 
 type ProductResponse = {
@@ -36,19 +35,11 @@ async function readJson<T>(response: Response): Promise<T> {
 
 export async function findProductByBarcode(barcode: string): Promise<ProductResponse> {
   const normalizedBarcode = normalizeBarcode(barcode);
-  const cacheKey = `${API_BASE_URL}::${normalizedBarcode}`;
-
-  const cachedProduct = getCachedLookup(cacheKey);
-  if (cachedProduct) {
-    return { item: cachedProduct };
-  }
 
   const response = await fetch(`${API_BASE_URL}/piloto/products/barcode/${encodeURIComponent(normalizedBarcode)}`, {
     cache: "no-store"
   });
-  const result = await readJson<ProductResponse>(response);
-  setCachedLookup(cacheKey, result.item);
-  return result;
+  return await readJson<ProductResponse>(response);
 }
 
 export async function createProduct(barcode: string, name: string, price: number): Promise<ProductResponse> {
@@ -60,9 +51,7 @@ export async function createProduct(barcode: string, name: string, price: number
     body: JSON.stringify({ barcode: normalizeBarcode(barcode), name, price })
   });
 
-  const result = await readJson<ProductResponse>(response);
-  setCachedLookup(`${API_BASE_URL}::${normalizeBarcode(barcode)}`, result.item);
-  return result;
+  return await readJson<ProductResponse>(response);
 }
 
 export async function updateProduct(productId: number, name: string, price: number): Promise<ProductResponse> {
@@ -74,19 +63,7 @@ export async function updateProduct(productId: number, name: string, price: numb
     body: JSON.stringify({ name, price })
   });
 
-  const result = await readJson<ProductResponse>(response);
-
-  // (Deshabilitado temporalmente: el POST extra a /cache/product-lookup/reset
-  // duplicaba pedidos al backend cuando se editaban muchos productos seguidos
-  // y causaba errores. El PATCH ya refresca el cache de ese producto puntual
-  // del lado del backend, asi que este llamado era redundante igual.)
-
-  // El cache local del navegador (localStorage, 12hs) tambien tenia guardada
-  // la version vieja del producto: si no se pisa aca, un re-escaneo del mismo
-  // codigo seguia mostrando el nombre/precio de antes de editar.
-  setCachedLookup(`${API_BASE_URL}::${normalizeBarcode(result.item.barcode)}`, result.item);
-
-  return result;
+  return await readJson<ProductResponse>(response);
 }
 
 export async function createSale(items: CartItem[], paymentMethod: PilotoPaymentMethod) {
