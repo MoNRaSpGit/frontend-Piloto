@@ -57,7 +57,13 @@ export function ScannerQuickAddModal({ barcode, onClose, onConfirm }: ScannerQui
         <form onSubmit={handleSubmit}>
           <label className="piloto-modal-field">
             <span>Nombre (opcional)</span>
-            <input value={name} onChange={(event) => setName(event.target.value)} placeholder="S/N" disabled={isSubmitting} />
+            <input
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="S/N"
+              disabled={isSubmitting}
+              autoComplete="off"
+            />
           </label>
 
           <label className="piloto-modal-field">

@@ -1,9 +1,27 @@
 import { API_BASE_URL } from "../../shared/config/api";
 import type { CartItem, PilotoPaymentMethod, PilotoProduct, PilotoSale } from "./piloto.types";
 
+// El backend no manda la imagen en el JSON del producto (se guarda aparte,
+// en binario, para no arrastrar base64 gigante en cada busqueda). Solo
+// manda si tiene o no, y se arma la url completa aca.
+type RawPilotoProduct = Omit<PilotoProduct, "imageUrl"> & { hasImage: boolean };
+
+type RawProductResponse = {
+  item: RawPilotoProduct;
+};
+
 type ProductResponse = {
   item: PilotoProduct;
 };
+
+function buildProductImageUrl(productId: number) {
+  return `${API_BASE_URL}/piloto/products/${productId}/image`;
+}
+
+function mapProduct(raw: RawPilotoProduct): PilotoProduct {
+  const { hasImage, ...rest } = raw;
+  return { ...rest, imageUrl: hasImage ? buildProductImageUrl(raw.id) : null };
+}
 
 type SaleResponse = {
   item: PilotoSale;
@@ -39,7 +57,8 @@ export async function findProductByBarcode(barcode: string): Promise<ProductResp
   const response = await fetch(`${API_BASE_URL}/piloto/products/barcode/${encodeURIComponent(normalizedBarcode)}`, {
     cache: "no-store"
   });
-  return await readJson<ProductResponse>(response);
+  const raw = await readJson<RawProductResponse>(response);
+  return { item: mapProduct(raw.item) };
 }
 
 export async function createProduct(barcode: string, name: string, price: number): Promise<ProductResponse> {
@@ -51,7 +70,8 @@ export async function createProduct(barcode: string, name: string, price: number
     body: JSON.stringify({ barcode: normalizeBarcode(barcode), name, price })
   });
 
-  return await readJson<ProductResponse>(response);
+  const raw = await readJson<RawProductResponse>(response);
+  return { item: mapProduct(raw.item) };
 }
 
 export async function updateProduct(productId: number, name: string, price: number): Promise<ProductResponse> {
@@ -63,7 +83,8 @@ export async function updateProduct(productId: number, name: string, price: numb
     body: JSON.stringify({ name, price })
   });
 
-  return await readJson<ProductResponse>(response);
+  const raw = await readJson<RawProductResponse>(response);
+  return { item: mapProduct(raw.item) };
 }
 
 export async function createSale(items: CartItem[], paymentMethod: PilotoPaymentMethod) {
