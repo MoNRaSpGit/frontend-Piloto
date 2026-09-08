@@ -43,6 +43,21 @@ export function PilotoHomePage() {
     setIsCheckoutOpen(true);
   }
 
+  // El boton "x" (y la fila del producto, para sumar 1 mas) del carrito
+  // le sacan el foco al buscador -- queda en el propio elemento
+  // clickeado, foco nativo del navegador. Se reenfoca igual que al
+  // cerrar cualquier modal, para poder seguir escaneando sin tocar el
+  // mouse.
+  function handleRemoveOne(productId: number) {
+    removeOne(productId);
+    setFocusSignal((signal) => signal + 1);
+  }
+
+  function handleAddOne(productId: number) {
+    addOne(productId);
+    setFocusSignal((signal) => signal + 1);
+  }
+
   async function handleSearch(barcode: string) {
     setIsLoading(true);
     setError("");
@@ -154,8 +169,8 @@ export function PilotoHomePage() {
           <ScannerCart
             items={cartItems}
             lastScannedProductId={lastScannedProductId}
-            onAddOne={addOne}
-            onRemoveOne={removeOne}
+            onAddOne={handleAddOne}
+            onRemoveOne={handleRemoveOne}
             onEdit={handleEditCartItem}
           />
           <ScannerCheckout
