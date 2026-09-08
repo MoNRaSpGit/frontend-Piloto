@@ -85,6 +85,10 @@ export function PilotoHomePage() {
       const response = await createProduct(quickAddBarcode, name, price);
       addProduct(response.item);
       setQuickAddBarcode(null);
+      // Empuje explicito ademas del efecto general que reenfoca al cerrar
+      // cualquier modal -- asi el proximo escaneo cae siempre en el
+      // buscador, sin depender de que ese efecto llegue a tiempo.
+      setFocusSignal((signal) => signal + 1);
       return true;
     } catch (createError) {
       toast.error(createError instanceof Error ? createError.message : "No se pudo guardar el producto.");
