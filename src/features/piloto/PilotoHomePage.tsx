@@ -9,9 +9,12 @@ import { ScannerQuickAddModal } from "./components/ScannerQuickAddModal";
 import { usePilotoCart } from "./hooks/usePilotoCart";
 import { printSaleTicket } from "./services/piloto.print";
 import { primeUsbPrinterConnection } from "./services/piloto.webusbPrint";
-import type { PilotoPaymentMethod } from "./piloto.types";
 
 const NOT_FOUND_MESSAGE = "Producto no encontrado.";
+// Ya no se elige medio de pago en la UI (pedido explicito, 16/09/2026:
+// "saca lo de tarjeta efectivo y demas") -- se manda siempre este valor
+// fijo, tanto a la venta como al ticket.
+const FIXED_PAYMENT_METHOD = "efectivo" as const;
 
 export function PilotoHomePage() {
   const [barcodeInput, setBarcodeInput] = useState("");
@@ -21,6 +24,11 @@ export function PilotoHomePage() {
   const [focusSignal, setFocusSignal] = useState(0);
   const [quickAddBarcode, setQuickAddBarcode] = useState<string | null>(null);
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
+  // Vive aca (no adentro de ScannerCart) para que el efecto de mas abajo
+  // se entere de cuando este modal se abre/cierra tambien -- pedido
+  // explicito (16/09/2026): "cierro un producto... siempre el cursor
+  // vuelve al input".
+  const [editingProductId, setEditingProductId] = useState<number | null>(null);
   const { cartItems, lastScannedProductId, addProduct, addManualItem, addOne, removeOne, updateItem, clearCart, total } =
     usePilotoCart();
 
@@ -30,13 +38,17 @@ export function PilotoHomePage() {
     void primeUsbPrinterConnection().catch(() => {});
   }, []);
 
-  // Al cerrarse cualquier modal, devolver el foco al input del escaner
-  // para seguir escaneando sin tocar el mouse.
+  // Al cerrarse CUALQUIER modal (cobro, alta rapida, producto manual o
+  // edicion de un producto del carrito), devolver el foco al input del
+  // escaner para seguir escaneando sin tocar el mouse -- pedido
+  // explicito (16/09/2026): "cada accion que se haga luego vuelva al
+  // input del escaner, ya sea que cierro un producto, cobro, o hago
+  // cualquier otra cosa".
   useEffect(() => {
-    if (!isCheckoutOpen && !quickAddBarcode && !isManualModalOpen) {
+    if (!isCheckoutOpen && !quickAddBarcode && !isManualModalOpen && editingProductId === null) {
       setFocusSignal((signal) => signal + 1);
     }
-  }, [isCheckoutOpen, quickAddBarcode, isManualModalOpen]);
+  }, [isCheckoutOpen, quickAddBarcode, isManualModalOpen, editingProductId]);
 
   function handleEmptyEnter() {
     if (!cartItems.length) return;
@@ -120,11 +132,11 @@ export function PilotoHomePage() {
     setIsManualModalOpen(false);
   }
 
-  async function handleCharge(paymentMethod: PilotoPaymentMethod) {
+  async function handleCharge() {
     try {
       const ticketItems = cartItems;
       const ticketTotal = total;
-      await createSale(cartItems, paymentMethod);
+      await createSale(cartItems, FIXED_PAYMENT_METHOD);
       clearCart();
       toast.success("Venta confirmada.");
 
@@ -132,7 +144,7 @@ export function PilotoHomePage() {
         await printSaleTicket({
           externalId: `piloto-${Date.now()}`,
           chargedAtIso: new Date().toISOString(),
-          paymentMethod,
+          paymentMethod: FIXED_PAYMENT_METHOD,
           items: ticketItems,
           total: ticketTotal
         });
@@ -176,6 +188,8 @@ export function PilotoHomePage() {
             onAddOne={handleAddOne}
             onRemoveOne={handleRemoveOne}
             onEdit={handleEditCartItem}
+            editingProductId={editingProductId}
+            onSetEditingProductId={setEditingProductId}
           />
           <ScannerCheckout
             total={total}

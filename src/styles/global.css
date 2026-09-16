@@ -396,53 +396,6 @@ input {
   color: #6c757d;
 }
 
-.piloto-payment-grid {
-  display: grid;
-  gap: 0.6rem;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin-bottom: 1.1rem;
-}
-
-.piloto-payment-btn {
-  position: relative;
-  min-height: 58px;
-  border: 2px solid transparent;
-  border-radius: 12px;
-  padding: 0.7rem 0.8rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-weight: 800;
-}
-
-.piloto-payment-btn--cash {
-  background: linear-gradient(180deg, #9fe6bf 0%, #57c98c 100%);
-  color: #08341d;
-}
-
-.piloto-payment-btn--card {
-  background: linear-gradient(180deg, #9dc9fb 0%, #4f93e8 100%);
-  color: #0b2c52;
-}
-
-.piloto-payment-btn--credit {
-  background: linear-gradient(180deg, #f3c877 0%, #dc9a2f 100%);
-  color: #442a04;
-}
-
-.piloto-payment-btn.is-active {
-  border-color: rgba(17, 24, 39, 0.82);
-  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.12);
-}
-
-.piloto-payment-input {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  pointer-events: none;
-}
-
 .piloto-modal-card__actions {
   display: flex;
   gap: 0.6rem;
@@ -454,6 +407,31 @@ input {
   border-radius: 10px;
   font-weight: 800;
   cursor: pointer;
+}
+
+/* Modal de cobro simplificado -- pedido explicito (16/09/2026): "saca
+   lo de tarjeta efectivo y demas, que apriete cobrar salga el modal
+   mas grande para confirmar con el precio". Sin selector de medio de
+   pago: solo el total, bien grande, y confirmar. */
+.piloto-modal-card--checkout {
+  max-width: 420px;
+  padding: 2.2rem 1.6rem 1.8rem;
+  text-align: center;
+}
+
+.piloto-modal-card__total--big {
+  margin: 0 0 1.8rem;
+  font-size: 3.2rem;
+}
+
+.piloto-modal-card__actions--big {
+  flex-direction: column-reverse;
+  gap: 0.7rem;
+}
+
+.piloto-button--big {
+  min-height: 64px;
+  font-size: 1.15rem;
 }
 
 .piloto-button--ghost {

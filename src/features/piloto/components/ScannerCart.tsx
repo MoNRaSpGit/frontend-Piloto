@@ -7,6 +7,13 @@ type ScannerCartProps = {
   onAddOne: (productId: number) => void;
   onRemoveOne: (productId: number) => void;
   onEdit: (productId: number, changes: { name: string; price: number }) => Promise<boolean>;
+  // Se maneja en el padre (PilotoHomePage), no adentro de este
+  // componente, para que el efecto general que devuelve el foco al
+  // buscador tambien se entere de cuando este modal se abre/cierra
+  // (pedido explicito, 16/09/2026: "cierro un producto... siempre el
+  // cursor vuelve al input").
+  editingProductId: number | null;
+  onSetEditingProductId: (productId: number | null) => void;
 };
 
 function formatCurrency(amount: number) {
@@ -113,8 +120,15 @@ function EditItemModal({
   );
 }
 
-export function ScannerCart({ items, lastScannedProductId, onAddOne, onRemoveOne, onEdit }: ScannerCartProps) {
-  const [editingProductId, setEditingProductId] = useState<number | null>(null);
+export function ScannerCart({
+  items,
+  lastScannedProductId,
+  onAddOne,
+  onRemoveOne,
+  onEdit,
+  editingProductId,
+  onSetEditingProductId
+}: ScannerCartProps) {
   const editingItem = items.find((item) => item.productId === editingProductId) ?? null;
 
   if (!items.length) {
@@ -160,7 +174,7 @@ export function ScannerCart({ items, lastScannedProductId, onAddOne, onRemoveOne
                     </div>
                   </td>
                   <td className="text-center">
-                    <button type="button" className="piloto-edit-btn" onClick={() => setEditingProductId(item.productId)}>
+                    <button type="button" className="piloto-edit-btn" onClick={() => onSetEditingProductId(item.productId)}>
                       Editar
                     </button>
                   </td>
@@ -186,7 +200,7 @@ export function ScannerCart({ items, lastScannedProductId, onAddOne, onRemoveOne
       {editingItem ? (
         <EditItemModal
           item={editingItem}
-          onClose={() => setEditingProductId(null)}
+          onClose={() => onSetEditingProductId(null)}
           onSave={(changes) => onEdit(editingItem.productId, changes)}
         />
       ) : null}

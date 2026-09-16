@@ -1,12 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import type { PilotoPaymentMethod } from "../piloto.types";
 
 type ScannerCheckoutProps = {
   total: number;
   isOpen: boolean;
   onOpen: () => void;
   onClose: () => void;
-  onCharge: (paymentMethod: PilotoPaymentMethod) => Promise<boolean>;
+  onCharge: () => Promise<boolean>;
 };
 
 function formatCurrency(amount: number) {
@@ -17,15 +16,12 @@ function formatCurrency(amount: number) {
   }).format(amount);
 }
 
-const PAYMENT_METHOD_OPTIONS: Array<{ value: PilotoPaymentMethod; label: string; className: string }> = [
-  { value: "efectivo", label: "Efectivo", className: "piloto-payment-btn--cash" },
-  { value: "tarjeta", label: "Tarjeta", className: "piloto-payment-btn--card" },
-  { value: "credito", label: "Credito", className: "piloto-payment-btn--credit" }
-];
-
+// Pedido explicito (16/09/2026): "saca lo de tarjeta efectivo y demas,
+// que apriete cobrar salga el modal mas grande para confirmar con el
+// precio y listo". Ya no se elige medio de pago -- un solo boton,
+// confirmar y cobrar.
 export function ScannerCheckout({ total, isOpen, onOpen, onClose, onCharge }: ScannerCheckoutProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<PilotoPaymentMethod>("efectivo");
   const confirmButtonRef = useRef<HTMLButtonElement>(null);
 
   // Autofocus del boton Confirmar al abrir: permite el camino feliz por teclado
@@ -40,12 +36,11 @@ export function ScannerCheckout({ total, isOpen, onOpen, onClose, onCharge }: Sc
     if (isSubmitting) return;
 
     setIsSubmitting(true);
-    const ok = await onCharge(paymentMethod);
+    const ok = await onCharge();
     setIsSubmitting(false);
 
     if (ok) {
       onClose();
-      setPaymentMethod("efectivo");
     }
   }
 
@@ -64,50 +59,22 @@ export function ScannerCheckout({ total, isOpen, onOpen, onClose, onCharge }: Sc
 
       {isOpen ? (
         <div className="piloto-modal-overlay" role="dialog" aria-modal="true" aria-label="Confirmar cobro">
-          <div className="piloto-modal-card">
-            <div className="piloto-modal-card__header">
-              <h2>Confirmar cobro</h2>
-              <button type="button" className="piloto-modal-close" onClick={onClose} disabled={isSubmitting}>
-                Cerrar
-              </button>
-            </div>
-
+          <div className="piloto-modal-card piloto-modal-card--checkout">
             <p className="piloto-modal-card__total-label">Total a cobrar</p>
-            <p className="piloto-modal-card__total">{formatCurrency(total)}</p>
+            <p className="piloto-modal-card__total piloto-modal-card__total--big">{formatCurrency(total)}</p>
 
-            <p className="piloto-modal-card__label">Medio de cobro</p>
-            <div className="piloto-payment-grid">
-              {PAYMENT_METHOD_OPTIONS.map((option) => (
-                <label
-                  key={option.value}
-                  className={`piloto-payment-btn ${option.className} ${paymentMethod === option.value ? "is-active" : ""}`}
-                >
-                  <input
-                    type="radio"
-                    name="piloto-payment-method"
-                    className="piloto-payment-input"
-                    value={option.value}
-                    checked={paymentMethod === option.value}
-                    disabled={isSubmitting}
-                    onChange={() => setPaymentMethod(option.value)}
-                  />
-                  <span>{option.label}</span>
-                </label>
-              ))}
-            </div>
-
-            <div className="piloto-modal-card__actions">
+            <div className="piloto-modal-card__actions piloto-modal-card__actions--big">
               <button type="button" className="piloto-button piloto-button--ghost" onClick={onClose} disabled={isSubmitting}>
                 Cancelar
               </button>
               <button
                 ref={confirmButtonRef}
                 type="button"
-                className="piloto-button piloto-button--primary"
+                className="piloto-button piloto-button--primary piloto-button--big"
                 onClick={handleConfirm}
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Confirmando..." : "Confirmar"}
+                {isSubmitting ? "Confirmando..." : "Confirmar cobro"}
               </button>
             </div>
           </div>
