@@ -7,8 +7,6 @@ import { ScannerCheckout } from "./components/ScannerCheckout";
 import { ScannerInput } from "./components/ScannerInput";
 import { ScannerQuickAddModal } from "./components/ScannerQuickAddModal";
 import { usePilotoCart } from "./hooks/usePilotoCart";
-import { printSaleTicket } from "./services/piloto.print";
-import { primeUsbPrinterConnection } from "./services/piloto.webusbPrint";
 
 const NOT_FOUND_MESSAGE = "Producto no encontrado.";
 // Ya no se elige medio de pago en la UI (pedido explicito, 16/09/2026:
@@ -31,12 +29,6 @@ export function PilotoHomePage() {
   const [editingProductId, setEditingProductId] = useState<number | null>(null);
   const { cartItems, lastScannedProductId, addProduct, addManualItem, addOne, removeOne, updateItem, clearCart, total } =
     usePilotoCart();
-
-  // Reconecta en silencio la impresora USB ya autorizada en una sesion
-  // anterior (no pide permiso de nuevo, solo la vuelve a encontrar).
-  useEffect(() => {
-    void primeUsbPrinterConnection().catch(() => {});
-  }, []);
 
   // Al cerrarse CUALQUIER modal (cobro, alta rapida, producto manual o
   // edicion de un producto del carrito), devolver el foco al input del
@@ -132,26 +124,16 @@ export function PilotoHomePage() {
     setIsManualModalOpen(false);
   }
 
+  // Pedido explicito (18/09/2026): "quitale cualquier cosa que tenga para
+  // imprimir, todavia no vamos a imprimir... que ponga cobrar y que cobre
+  // y chao, y empiece todo de vuelta". Se sacó el intento de imprimir
+  // (printSaleTicket) que tiraba el cartel de "no encontro dispositivo" --
+  // por ahora la venta se confirma y listo, sin tocar nada de impresion.
   async function handleCharge() {
     try {
-      const ticketItems = cartItems;
-      const ticketTotal = total;
       await createSale(cartItems, FIXED_PAYMENT_METHOD);
       clearCart();
       toast.success("Venta confirmada.");
-
-      try {
-        await printSaleTicket({
-          externalId: `piloto-${Date.now()}`,
-          chargedAtIso: new Date().toISOString(),
-          paymentMethod: FIXED_PAYMENT_METHOD,
-          items: ticketItems,
-          total: ticketTotal
-        });
-      } catch (printError) {
-        toast.error(printError instanceof Error ? `No se pudo imprimir: ${printError.message}` : "No se pudo imprimir el ticket.");
-      }
-
       return true;
     } catch (chargeError) {
       toast.error(chargeError instanceof Error ? chargeError.message : "No se pudo confirmar la venta.");
