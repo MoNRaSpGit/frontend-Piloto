@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { CartItem } from "../piloto.types";
 
 type ScannerCartProps = {
@@ -53,6 +53,8 @@ function EditItemModal({
   const [price, setPrice] = useState(String(item.price));
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const priceInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setName(item.name);
@@ -60,16 +62,36 @@ function EditItemModal({
     setError("");
   }, [item]);
 
-  async function handleSave() {
+  // Pedido explicito (20/09/2026): "editar producto -> completar los campos
+  // -> Enter = confirmar/guardar". El cursor arranca en el PRECIO (lo que
+  // mas se corrige en un POS), seleccionado, listo para tipear encima.
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      priceInputRef.current?.focus();
+      priceInputRef.current?.select();
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, []);
+
+  // Es un <form>: Enter en cualquiera de los dos campos guarda. Si falta un
+  // dato obligatorio, el cursor va directo a ese campo en vez de solo
+  // mostrar el cartel.
+  async function handleSave(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (isSaving) return;
+
     const trimmedName = name.trim();
     const parsedPrice = Number(price.replace(",", "."));
 
     if (!trimmedName) {
       setError("Ingresa un nombre.");
+      nameInputRef.current?.focus();
       return;
     }
     if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
       setError("Ingresa un precio valido mayor a 0.");
+      priceInputRef.current?.focus();
+      priceInputRef.current?.select();
       return;
     }
 
@@ -95,26 +117,41 @@ function EditItemModal({
           </button>
         </div>
 
-        <label className="piloto-modal-field">
-          <span>Nombre</span>
-          <input value={name} onChange={(event) => setName(event.target.value)} disabled={isSaving} />
-        </label>
+        <form onSubmit={handleSave}>
+          <label className="piloto-modal-field">
+            <span>Nombre</span>
+            <input
+              ref={nameInputRef}
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              disabled={isSaving}
+              autoComplete="off"
+            />
+          </label>
 
-        <label className="piloto-modal-field">
-          <span>Precio</span>
-          <input value={price} onChange={(event) => setPrice(event.target.value)} inputMode="decimal" disabled={isSaving} />
-        </label>
+          <label className="piloto-modal-field">
+            <span>Precio</span>
+            <input
+              ref={priceInputRef}
+              value={price}
+              onChange={(event) => setPrice(event.target.value)}
+              inputMode="decimal"
+              disabled={isSaving}
+            />
+          </label>
 
-        {error ? <p className="piloto-scanner-status piloto-scanner-status--error">{error}</p> : null}
+          {error ? <p className="piloto-scanner-status piloto-scanner-status--error">{error}</p> : null}
 
-        <div className="piloto-modal-card__actions">
-          <button type="button" className="piloto-button piloto-button--ghost" onClick={onClose} disabled={isSaving}>
-            Cancelar
-          </button>
-          <button type="button" className="piloto-button piloto-button--primary" onClick={handleSave} disabled={isSaving}>
-            {isSaving ? "Guardando..." : "Guardar"}
-          </button>
-        </div>
+          <div className="piloto-modal-card__actions">
+            <button type="button" className="piloto-button piloto-button--danger" onClick={onClose} disabled={isSaving}>
+              Cancelar
+            </button>
+            <button type="submit" className="piloto-button piloto-button--primary" disabled={isSaving}>
+              {isSaving ? "Guardando..." : "Guardar"}
+            </button>
+          </div>
+          <p className="piloto-enter-hint">Tecla Enter = Guardar</p>
+        </form>
       </div>
     </div>
   );
@@ -145,7 +182,7 @@ export function ScannerCart({
               <th className="text-center">Editar</th>
               <th className="text-end">Cant.</th>
               <th className="text-end">Total</th>
-              <th className="text-end"></th>
+              <th className="text-center piloto-cart-table__remove-col">Quitar</th>
             </tr>
           </thead>
           <tbody>
@@ -180,14 +217,15 @@ export function ScannerCart({
                   </td>
                   <td className="text-end piloto-cart-table__strong">{item.quantity}</td>
                   <td className="text-end piloto-cart-table__strong">{formatCurrency(lineTotal)}</td>
-                  <td className="text-end">
+                  <td className="piloto-cart-table__remove-col">
                     <button
                       type="button"
                       className="piloto-cart-row__remove"
                       onClick={() => onRemoveOne(item.productId)}
                       aria-label={`Quitar una unidad de ${item.name}`}
+                      title="Quitar"
                     >
-                      x
+                      ✕
                     </button>
                   </td>
                 </tr>

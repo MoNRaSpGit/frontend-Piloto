@@ -55,13 +55,14 @@ export function ManualProductModal({ onClose, onConfirm }: ManualProductModalPro
           {error ? <p className="piloto-scanner-status piloto-scanner-status--error">{error}</p> : null}
 
           <div className="piloto-modal-card__actions">
-            <button type="button" className="piloto-button piloto-button--ghost" onClick={onClose}>
+            <button type="button" className="piloto-button piloto-button--danger" onClick={onClose}>
               Cancelar
             </button>
             <button type="submit" className="piloto-button piloto-button--primary">
               Agregar
             </button>
           </div>
+          <p className="piloto-enter-hint">Tecla Enter = Agregar</p>
         </form>
       </div>
     </div>

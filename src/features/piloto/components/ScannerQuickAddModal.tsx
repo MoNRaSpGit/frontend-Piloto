@@ -12,6 +12,7 @@ export function ScannerQuickAddModal({ barcode, onClose, onConfirm }: ScannerQui
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const priceInputRef = useRef<HTMLInputElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   // El cursor va directo al precio: es el unico dato obligatorio para dar de alta rapido.
   useEffect(() => {
@@ -26,9 +27,19 @@ export function ScannerQuickAddModal({ barcode, onClose, onConfirm }: ScannerQui
     event.preventDefault();
     if (isSubmitting) return;
 
+    // Enter desde el Nombre con el Precio todavia vacio: el siguiente paso
+    // logico es ir al Precio (no mostrar un error) -- pedido explicito
+    // (20/09/2026): Enter siempre lleva al siguiente paso.
+    if (!priceInput.trim() && document.activeElement === nameInputRef.current) {
+      priceInputRef.current?.focus();
+      return;
+    }
+
     const parsedPrice = Number(priceInput.replace(",", "."));
     if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
       setError("Ingresa un precio valido mayor a 0.");
+      priceInputRef.current?.focus();
+      priceInputRef.current?.select();
       return;
     }
 
@@ -58,6 +69,7 @@ export function ScannerQuickAddModal({ barcode, onClose, onConfirm }: ScannerQui
           <label className="piloto-modal-field">
             <span>Nombre (opcional)</span>
             <input
+              ref={nameInputRef}
               value={name}
               onChange={(event) => setName(event.target.value)}
               placeholder="S/N"
@@ -81,13 +93,14 @@ export function ScannerQuickAddModal({ barcode, onClose, onConfirm }: ScannerQui
           {error ? <p className="piloto-scanner-status piloto-scanner-status--error">{error}</p> : null}
 
           <div className="piloto-modal-card__actions">
-            <button type="button" className="piloto-button piloto-button--ghost" onClick={onClose} disabled={isSubmitting}>
+            <button type="button" className="piloto-button piloto-button--danger" onClick={onClose} disabled={isSubmitting}>
               Cancelar
             </button>
             <button type="submit" className="piloto-button piloto-button--primary" disabled={isSubmitting}>
               {isSubmitting ? "Guardando..." : "Agregar"}
             </button>
           </div>
+          <p className="piloto-enter-hint">Tecla Enter = Guardar y agregar</p>
         </form>
       </div>
     </div>

@@ -32,17 +32,52 @@ export function ScannerCheckout({ total, isOpen, onOpen, onClose, onCharge }: Sc
     return () => window.clearTimeout(timeoutId);
   }, [isOpen]);
 
+  // Guarda contra doble cobro: state no alcanza (dos Enter en el mismo
+  // instante leen el mismo valor viejo), asi que se usa un ref.
+  const isChargingRef = useRef(false);
+
   async function handleConfirm() {
-    if (isSubmitting) return;
+    if (isChargingRef.current) return;
+    isChargingRef.current = true;
 
     setIsSubmitting(true);
     const ok = await onCharge();
     setIsSubmitting(false);
+    isChargingRef.current = false;
 
     if (ok) {
       onClose();
     }
   }
+
+  // Pedido explicito (20/09/2026): "Enter siempre sigue el camino logico".
+  // Con el modal abierto, Enter confirma el cobro AUNQUE el foco se haya
+  // perdido (ej: tocaron el total con el mouse y el boton ya no tiene el
+  // cursor). Si el foco esta en un boton (Confirmar o Cancelar) se deja
+  // que Enter haga lo suyo de siempre sobre ese boton -- asi Enter sobre
+  // Cancelar cancela, y sobre Confirmar no se dispara dos veces.
+  //
+  // El listener llama SIEMPRE a la ultima version de handleConfirm (via
+  // ref): si quedara guardada la del momento en que se abrio el modal,
+  // cobraria un carrito viejo si cambio algo mientras estaba abierto.
+  const latestConfirmRef = useRef(handleConfirm);
+  useEffect(() => {
+    latestConfirmRef.current = handleConfirm;
+  });
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key !== "Enter" || event.repeat) return;
+      if ((event.target as HTMLElement | null)?.tagName === "BUTTON") return;
+      event.preventDefault();
+      void latestConfirmRef.current();
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen]);
 
   return (
     <>
@@ -64,7 +99,10 @@ export function ScannerCheckout({ total, isOpen, onOpen, onClose, onCharge }: Sc
             <p className="piloto-modal-card__total piloto-modal-card__total--big">{formatCurrency(total)}</p>
 
             <div className="piloto-modal-card__actions piloto-modal-card__actions--big">
-              <button type="button" className="piloto-button piloto-button--ghost" onClick={onClose} disabled={isSubmitting}>
+              {/* Cancelar en rojo y grande (pedido explicito 20/09/2026, para
+                  que se vea bien a simple vista); Confirmar sigue siendo la
+                  accion principal (negro, arriba, con el foco). */}
+              <button type="button" className="piloto-button piloto-button--danger piloto-button--big" onClick={onClose} disabled={isSubmitting}>
                 Cancelar
               </button>
               <button
@@ -77,6 +115,7 @@ export function ScannerCheckout({ total, isOpen, onOpen, onClose, onCharge }: Sc
                 {isSubmitting ? "Confirmando..." : "Confirmar cobro"}
               </button>
             </div>
+            <p className="piloto-enter-hint">Tecla Enter = Confirmar cobro</p>
           </div>
         </div>
       ) : null}
