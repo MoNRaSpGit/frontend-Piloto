@@ -13,7 +13,12 @@ const NOT_FOUND_MESSAGE = "Producto no encontrado.";
 // "saca lo de tarjeta efectivo y demas") -- se manda siempre este valor
 // fijo, tanto a la venta como al ticket.
 const FIXED_PAYMENT_METHOD = "efectivo" as const;
-// Atajo de teclado: cualquiera de las 4 flechas abre "Producto manual".
+// Atajo de teclado: cualquiera de las 4 flechas abre "Producto manual". Arriba
+// y abajo no se usan para nada dentro de un campo de texto de una linea en
+// este proyecto, asi que se dejan "dominantes" (abren el modal incluso
+// escribiendo). Izquierda y derecha si hacen falta ahi (mover el cursor para
+// corregir sin mouse), asi que dentro de un campo editable se ignoran.
+const DOMINANT_ARROW_KEYS = new Set(["ArrowUp", "ArrowDown"]);
 const ARROW_KEYS = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"]);
 
 export function PilotoHomePage() {
@@ -45,12 +50,14 @@ export function PilotoHomePage() {
   }, [isCheckoutOpen, quickAddBarcode, isManualModalOpen, editingProductId]);
 
   // Atajo de teclado (20/09/2026, pedido explicito: "cambiar de boton a las
-  // flechitas... a esas, a las 4 flechas, sin importar q flecha apreta abrir
-  // producto manual, y saca lo del espacio"). Cualquiera de las 4 flechas
-  // abre "Producto manual", igual que si se clickeara el boton. No debe
-  // interferir si el usuario esta escribiendo/navegando en un campo editable
-  // (por ejemplo el precio, o un select) ni duplicar modales si ya hay otro
-  // abierto.
+  // flechitas... que predomine la flechita, sin importar q este en un input
+  // q si aprieto la flechita abra el PM, xq la idea es que no se use el
+  // mouse... y tener en cuenta si molesta en alguna accion de venta").
+  // Cualquiera de las 4 flechas abre "Producto manual", igual que si se
+  // clickeara el boton -- INCLUSO si el foco esta en un input, salvo
+  // izquierda/derecha dentro de un campo editable, que se dejan mover el
+  // cursor (ver DOMINANT_ARROW_KEYS mas arriba). No duplica modales si ya
+  // hay otro abierto.
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (!ARROW_KEYS.has(event.key)) return;
@@ -62,7 +69,7 @@ export function PilotoHomePage() {
           target.tagName === "TEXTAREA" ||
           target.tagName === "SELECT" ||
           target.isContentEditable);
-      if (isEditable) return;
+      if (isEditable && !DOMINANT_ARROW_KEYS.has(event.key)) return;
 
       if (isManualModalOpen || isCheckoutOpen || quickAddBarcode || editingProductId !== null) return;
 
