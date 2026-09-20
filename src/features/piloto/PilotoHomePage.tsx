@@ -42,6 +42,35 @@ export function PilotoHomePage() {
     }
   }, [isCheckoutOpen, quickAddBarcode, isManualModalOpen, editingProductId]);
 
+  // Atajo de teclado (20/09/2026, pedido explicito): Espacio abre "Producto
+  // manual", igual que si se clickeara el boton. No debe interferir si el
+  // usuario esta escribiendo en un campo editable (por ejemplo el precio
+  // dentro de un modal) ni duplicar modales si ya hay otro abierto.
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.code !== "Space" && event.key !== " ") return;
+
+      const target = event.target as HTMLElement | null;
+      const isEditable =
+        !!target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable);
+      if (isEditable) return;
+
+      if (isManualModalOpen || isCheckoutOpen || quickAddBarcode || editingProductId !== null) return;
+
+      // preventDefault: que el Espacio no dispare el boton que tenga el
+      // foco (por ejemplo si el usuario tabulo hasta ahi) ni haga scroll.
+      event.preventDefault();
+      setIsManualModalOpen(true);
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isManualModalOpen, isCheckoutOpen, quickAddBarcode, editingProductId]);
+
   function handleEmptyEnter() {
     if (!cartItems.length) return;
     setIsCheckoutOpen(true);
