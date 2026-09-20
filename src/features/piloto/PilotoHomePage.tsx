@@ -13,6 +13,8 @@ const NOT_FOUND_MESSAGE = "Producto no encontrado.";
 // "saca lo de tarjeta efectivo y demas") -- se manda siempre este valor
 // fijo, tanto a la venta como al ticket.
 const FIXED_PAYMENT_METHOD = "efectivo" as const;
+// Atajo de teclado: cualquiera de las 4 flechas abre "Producto manual".
+const ARROW_KEYS = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"]);
 
 export function PilotoHomePage() {
   const [barcodeInput, setBarcodeInput] = useState("");
@@ -42,13 +44,16 @@ export function PilotoHomePage() {
     }
   }, [isCheckoutOpen, quickAddBarcode, isManualModalOpen, editingProductId]);
 
-  // Atajo de teclado (20/09/2026, pedido explicito): Espacio abre "Producto
-  // manual", igual que si se clickeara el boton. No debe interferir si el
-  // usuario esta escribiendo en un campo editable (por ejemplo el precio
-  // dentro de un modal) ni duplicar modales si ya hay otro abierto.
+  // Atajo de teclado (20/09/2026, pedido explicito: "cambiar de boton a las
+  // flechitas... a esas, a las 4 flechas, sin importar q flecha apreta abrir
+  // producto manual, y saca lo del espacio"). Cualquiera de las 4 flechas
+  // abre "Producto manual", igual que si se clickeara el boton. No debe
+  // interferir si el usuario esta escribiendo/navegando en un campo editable
+  // (por ejemplo el precio, o un select) ni duplicar modales si ya hay otro
+  // abierto.
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.code !== "Space" && event.key !== " ") return;
+      if (!ARROW_KEYS.has(event.key)) return;
 
       const target = event.target as HTMLElement | null;
       const isEditable =
@@ -61,8 +66,8 @@ export function PilotoHomePage() {
 
       if (isManualModalOpen || isCheckoutOpen || quickAddBarcode || editingProductId !== null) return;
 
-      // preventDefault: que el Espacio no dispare el boton que tenga el
-      // foco (por ejemplo si el usuario tabulo hasta ahi) ni haga scroll.
+      // preventDefault: que la flecha no mueva el foco entre botones ni
+      // haga scroll de la pagina.
       event.preventDefault();
       setIsManualModalOpen(true);
     }
