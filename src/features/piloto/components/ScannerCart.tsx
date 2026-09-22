@@ -49,7 +49,12 @@ function EditItemModal({
   onClose: () => void;
   onSave: (changes: { name: string; price: number }) => Promise<boolean>;
 }) {
-  const [name, setName] = useState(item.name);
+  // "S/N" (Sin Nombre) es el valor que se guarda cuando el producto se creo
+  // sin nombre (ver ScannerQuickAddModal, mas abajo en este mismo archivo)
+  // -- pedido explicito (21/09/2026): que nunca aparezca como texto real
+  // dentro del input, siempre como placeholder, para no tener que borrarlo
+  // a mano antes de escribir el nombre real.
+  const [name, setName] = useState(item.name === "S/N" ? "" : item.name);
   const [price, setPrice] = useState(String(item.price));
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -57,7 +62,7 @@ function EditItemModal({
   const priceInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setName(item.name);
+    setName(item.name === "S/N" ? "" : item.name);
     setPrice(String(item.price));
     setError("");
   }, [item]);
@@ -80,14 +85,13 @@ function EditItemModal({
     event.preventDefault();
     if (isSaving) return;
 
-    const trimmedName = name.trim();
+    // Sin nombre se guarda como "S/N" (mismo criterio que ScannerQuickAddModal,
+    // mas abajo) -- pedido explicito (21/09/2026): "S/N" nunca se carga como
+    // texto editable en el input (ver el useState de name, arriba), pero se
+    // sigue pudiendo guardar sin nombre igual que antes.
+    const trimmedName = name.trim() || "S/N";
     const parsedPrice = Number(price.replace(",", "."));
 
-    if (!trimmedName) {
-      setError("Ingresa un nombre.");
-      nameInputRef.current?.focus();
-      return;
-    }
     if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
       setError("Ingresa un precio valido mayor a 0.");
       priceInputRef.current?.focus();
@@ -124,6 +128,7 @@ function EditItemModal({
               ref={nameInputRef}
               value={name}
               onChange={(event) => setName(event.target.value)}
+              placeholder="S/N"
               disabled={isSaving}
               autoComplete="off"
             />
