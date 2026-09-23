@@ -1,5 +1,5 @@
 import { API_BASE_URL } from "../../shared/config/api";
-import type { CartItem, PilotoPaymentMethod, PilotoProduct, PilotoSale } from "./piloto.types";
+import type { CartItem, PilotoPaymentMethod, PilotoPriceCategory, PilotoPriceEntry, PilotoProduct, PilotoSale } from "./piloto.types";
 
 // El backend no manda la imagen en el JSON del producto (se guarda aparte,
 // en binario, para no arrastrar base64 gigante en cada busqueda). Solo
@@ -108,4 +108,41 @@ export async function createSale(items: CartItem[], paymentMethod: PilotoPayment
   });
 
   return readJson<SaleResponse>(response);
+}
+
+// "Precios" -- Modo Pro (23/09/2026): lista de precios por categoria,
+// independiente de los productos del escaner (de arriba en este archivo).
+type PriceEntryListResponse = { items: PilotoPriceEntry[] };
+type PriceEntryResponse = { item: PilotoPriceEntry };
+
+export async function listPriceEntries(): Promise<PriceEntryListResponse> {
+  const response = await fetch(`${API_BASE_URL}/piloto/price-entries`, { cache: "no-store" });
+  return readJson<PriceEntryListResponse>(response);
+}
+
+export async function createPriceEntry(
+  category: PilotoPriceCategory,
+  name: string,
+  price: number
+): Promise<PriceEntryResponse> {
+  const response = await fetch(`${API_BASE_URL}/piloto/price-entries`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ category, name, price })
+  });
+  return readJson<PriceEntryResponse>(response);
+}
+
+export async function updatePriceEntry(id: number, name: string, price: number): Promise<PriceEntryResponse> {
+  const response = await fetch(`${API_BASE_URL}/piloto/price-entries/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, price })
+  });
+  return readJson<PriceEntryResponse>(response);
+}
+
+export async function deletePriceEntry(id: number): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/piloto/price-entries/${id}`, { method: "DELETE" });
+  await readJson<{ ok: true }>(response);
 }

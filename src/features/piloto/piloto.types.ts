@@ -29,3 +29,16 @@ export type CartItem = {
   quantity: number;
   imageUrl: string | null;
 };
+
+// "Precios" -- Modo Pro (23/09/2026): lista de precios por categoria,
+// independiente de los productos reales del escaner (PilotoProduct).
+export type PilotoPriceCategory = "congelados" | "frutas_verduras" | "empanadas" | "otros";
+
+export type PilotoPriceEntry = {
+  id: number;
+  category: PilotoPriceCategory;
+  name: string;
+  price: number;
+  createdAt: string;
+  updatedAt: string;
+};

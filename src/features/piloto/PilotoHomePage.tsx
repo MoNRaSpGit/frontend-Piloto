@@ -11,7 +11,10 @@ import { ScannerQuickAddModal } from "./components/ScannerQuickAddModal";
 import { usePilotoCart, type PilotoRegisterId } from "./hooks/usePilotoCart";
 import { usePilotoMode } from "./piloto.mode";
 import { printSaleTicketByQz } from "./services/piloto.qzPrint";
+import { PilotoPricesScreen } from "./screens/PilotoPricesScreen";
 import { setAppBusy } from "../../shared/state/appActivity";
+
+type PilotoTopTab = "productos" | "precios";
 
 const NOT_FOUND_MESSAGE = "Producto no encontrado.";
 // Ya no se elige medio de pago en la UI (pedido explicito, 16/09/2026:
@@ -47,6 +50,11 @@ export function PilotoHomePage() {
   const [editingProductId, setEditingProductId] = useState<number | null>(null);
   const { mode, setMode, isPro } = usePilotoMode();
   const [isModeModalOpen, setIsModeModalOpen] = useState(false);
+  // "Precios" -- Modo Pro (23/09/2026, pedido explicito): pestana nueva,
+  // solo existe en Pro. En Basico no hay nav para elegirla, pero por las
+  // dudas (si se cambia de modo estando parado en Precios) se fuerza a
+  // volver a "productos" -- ver el efecto mas abajo.
+  const [activeTopTab, setActiveTopTab] = useState<PilotoTopTab>("productos");
   const titleClickCountRef = useRef(0);
   const titleClickTimeoutRef = useRef<number | null>(null);
 
@@ -105,6 +113,12 @@ export function PilotoHomePage() {
       setActiveRegisterId(registerSummaries[0].id);
     }
   }, [isPro, activeRegisterId, registerSummaries, setActiveRegisterId]);
+
+  useEffect(() => {
+    if (!isPro && activeTopTab !== "productos") {
+      setActiveTopTab("productos");
+    }
+  }, [isPro, activeTopTab]);
 
   // Atajo de teclado (20/09/2026, pedido explicito: "cambiar de boton a las
   // flechitas... que predomine la flechita, sin importar q este en un input
@@ -322,58 +336,89 @@ export function PilotoHomePage() {
         </button>
       </header>
 
-      <RegisterTabs registers={visibleRegisterSummaries} activeRegisterId={activeRegisterId} onSelect={handleSelectRegister} />
+      {/* "Productos" / "Precios" -- solo Modo Pro (pedido explicito,
+          23/09/2026): "Precios" no existe en Basico. */}
+      {isPro ? (
+        <div className="piloto-top-nav" role="tablist" aria-label="Secciones">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTopTab === "productos"}
+            className={activeTopTab === "productos" ? "piloto-top-tab is-active" : "piloto-top-tab"}
+            onClick={() => setActiveTopTab("productos")}
+          >
+            Productos
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTopTab === "precios"}
+            className={activeTopTab === "precios" ? "piloto-top-tab is-active" : "piloto-top-tab"}
+            onClick={() => setActiveTopTab("precios")}
+          >
+            Precios
+          </button>
+        </div>
+      ) : null}
 
-      <ScannerInput
-        value={barcodeInput}
-        onChange={setBarcodeInput}
-        onSubmit={handleSearch}
-        onEmptyEnter={handleEmptyEnter}
-        isLoading={isLoading}
-        error={error}
-        focusSignal={focusSignal}
-      />
-
-      <button type="button" className="piloto-manual-btn" onClick={() => setIsManualModalOpen(true)}>
-        Producto Manual
-      </button>
-
-      {cartItems.length ? (
-        <>
-          <ScannerCart
-            items={cartItems}
-            lastScannedProductId={lastScannedProductId}
-            onAddOne={handleAddOne}
-            onRemoveOne={handleRemoveOne}
-            onEdit={handleEditCartItem}
-            editingProductId={editingProductId}
-            onSetEditingProductId={setEditingProductId}
-          />
-          <ScannerCheckout
-            total={total}
-            isOpen={isCheckoutOpen}
-            onOpen={() => setIsCheckoutOpen(true)}
-            onClose={() => setIsCheckoutOpen(false)}
-            onCharge={handleCharge}
-          />
-        </>
+      {activeTopTab === "precios" && isPro ? (
+        <PilotoPricesScreen />
       ) : (
-        <section className="piloto-empty-state">
-          <p>Todavia no escaneaste ningun producto.</p>
-        </section>
+        <>
+          <RegisterTabs registers={visibleRegisterSummaries} activeRegisterId={activeRegisterId} onSelect={handleSelectRegister} />
+
+          <ScannerInput
+            value={barcodeInput}
+            onChange={setBarcodeInput}
+            onSubmit={handleSearch}
+            onEmptyEnter={handleEmptyEnter}
+            isLoading={isLoading}
+            error={error}
+            focusSignal={focusSignal}
+          />
+
+          <button type="button" className="piloto-manual-btn" onClick={() => setIsManualModalOpen(true)}>
+            Producto Manual
+          </button>
+
+          {cartItems.length ? (
+            <>
+              <ScannerCart
+                items={cartItems}
+                lastScannedProductId={lastScannedProductId}
+                onAddOne={handleAddOne}
+                onRemoveOne={handleRemoveOne}
+                onEdit={handleEditCartItem}
+                editingProductId={editingProductId}
+                onSetEditingProductId={setEditingProductId}
+              />
+              <ScannerCheckout
+                total={total}
+                isOpen={isCheckoutOpen}
+                onOpen={() => setIsCheckoutOpen(true)}
+                onClose={() => setIsCheckoutOpen(false)}
+                onCharge={handleCharge}
+              />
+            </>
+          ) : (
+            <section className="piloto-empty-state">
+              <p>Todavia no escaneaste ningun producto.</p>
+            </section>
+          )}
+
+          {quickAddBarcode ? (
+            <ScannerQuickAddModal
+              barcode={quickAddBarcode}
+              onClose={() => setQuickAddBarcode(null)}
+              onConfirm={handleQuickAddConfirm}
+            />
+          ) : null}
+
+          {isManualModalOpen ? (
+            <ManualProductModal onClose={() => setIsManualModalOpen(false)} onConfirm={handleManualConfirm} />
+          ) : null}
+        </>
       )}
-
-      {quickAddBarcode ? (
-        <ScannerQuickAddModal
-          barcode={quickAddBarcode}
-          onClose={() => setQuickAddBarcode(null)}
-          onConfirm={handleQuickAddConfirm}
-        />
-      ) : null}
-
-      {isManualModalOpen ? (
-        <ManualProductModal onClose={() => setIsManualModalOpen(false)} onConfirm={handleManualConfirm} />
-      ) : null}
 
       {isModeModalOpen ? (
         <PilotoModeModal mode={mode} onSelect={handleSelectMode} onClose={() => setIsModeModalOpen(false)} />
