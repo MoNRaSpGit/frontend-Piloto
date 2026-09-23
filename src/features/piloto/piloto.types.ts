@@ -42,3 +42,28 @@ export type PilotoPriceEntry = {
   createdAt: string;
   updatedAt: string;
 };
+
+// "Panel de control" -- Modo Pro (24/09/2026): ventas, ganancia (30% de
+// las ventas) y el detalle de cada venta del dia ("Movimientos").
+export type PilotoSaleMovementItem = {
+  name: string;
+  quantity: number;
+};
+
+export type PilotoSaleMovement = {
+  id: number;
+  displayNumber: number;
+  createdAt: string;
+  totalAmount: number;
+  paymentMethod: PilotoPaymentMethod;
+  items: PilotoSaleMovementItem[];
+};
+
+export type PilotoSalesSummary = {
+  date: string;
+  salesCount: number;
+  totalAmount: number;
+  profitAmount: number;
+  profitMarginRatio: number;
+  sales: PilotoSaleMovement[];
+};

@@ -13,10 +13,11 @@ import { ScannerQuickAddModal } from "./components/ScannerQuickAddModal";
 import { usePilotoCart, type PilotoRegisterId } from "./hooks/usePilotoCart";
 import { usePilotoMode } from "./piloto.mode";
 import { printSaleTicketByQz } from "./services/piloto.qzPrint";
+import { PilotoDashboardScreen } from "./screens/PilotoDashboardScreen";
 import { PilotoPricesScreen } from "./screens/PilotoPricesScreen";
 import { setAppBusy } from "../../shared/state/appActivity";
 
-type PilotoTopTab = "productos" | "precios";
+type PilotoTopTab = "productos" | "precios" | "panel";
 
 const NOT_FOUND_MESSAGE = "Producto no encontrado.";
 // Ya no se elige medio de pago en la UI (pedido explicito, 16/09/2026:
@@ -397,6 +398,8 @@ export function PilotoHomePage() {
           necesariamente la que este activa en ese momento). */}
       {activeTopTab === "precios" && isPro ? (
         <PilotoPricesScreen registers={registerSummaries} defaultRegisterId={registerSummaries[0]?.id ?? 1} onAddToRegister={addManualItemToRegister} />
+      ) : activeTopTab === "panel" && isPro ? (
+        <PilotoDashboardScreen />
       ) : (
         <>
           <RegisterTabs registers={visibleRegisterSummaries} activeRegisterId={activeRegisterId} onSelect={handleSelectRegister} />

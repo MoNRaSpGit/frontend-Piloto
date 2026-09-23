@@ -1,5 +1,13 @@
 import { API_BASE_URL } from "../../shared/config/api";
-import type { CartItem, PilotoPaymentMethod, PilotoPriceCategory, PilotoPriceEntry, PilotoProduct, PilotoSale } from "./piloto.types";
+import type {
+  CartItem,
+  PilotoPaymentMethod,
+  PilotoPriceCategory,
+  PilotoPriceEntry,
+  PilotoProduct,
+  PilotoSale,
+  PilotoSalesSummary
+} from "./piloto.types";
 
 // El backend no manda la imagen en el JSON del producto (se guarda aparte,
 // en binario, para no arrastrar base64 gigante en cada busqueda). Solo
@@ -145,4 +153,12 @@ export async function updatePriceEntry(id: number, name: string, price: number):
 export async function deletePriceEntry(id: number): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/piloto/price-entries/${id}`, { method: "DELETE" });
   await readJson<{ ok: true }>(response);
+}
+
+// "Panel de control" -- Modo Pro (24/09/2026): ventas, ganancia y el
+// detalle de cada venta del dia. Sin `date` (YYYY-MM-DD), es hoy.
+export async function getSalesSummary(date?: string): Promise<PilotoSalesSummary> {
+  const query = date ? `?date=${encodeURIComponent(date)}` : "";
+  const response = await fetch(`${API_BASE_URL}/piloto/sales/summary${query}`, { cache: "no-store" });
+  return readJson<PilotoSalesSummary>(response);
 }
