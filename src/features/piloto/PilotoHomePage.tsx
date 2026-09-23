@@ -77,6 +77,7 @@ export function PilotoHomePage() {
     lastScannedProductId,
     addProduct,
     addManualItem,
+    addManualItemToRegister,
     addOne,
     removeOne,
     updateItem,
@@ -373,8 +374,10 @@ export function PilotoHomePage() {
         </div>
       ) : null}
 
+      {/* Pedido explicito: "por defecto, dejar seleccionada Caja 1" (no
+          necesariamente la que este activa en ese momento). */}
       {activeTopTab === "precios" && isPro ? (
-        <PilotoPricesScreen />
+        <PilotoPricesScreen registers={registerSummaries} defaultRegisterId={registerSummaries[0]?.id ?? 1} onAddToRegister={addManualItemToRegister} />
       ) : (
         <>
           <RegisterTabs registers={visibleRegisterSummaries} activeRegisterId={activeRegisterId} onSelect={handleSelectRegister} />

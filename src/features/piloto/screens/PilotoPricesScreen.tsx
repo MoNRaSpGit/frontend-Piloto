@@ -1,8 +1,16 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
+import { AddToRegisterModal } from "../components/AddToRegisterModal";
 import { PriceEntryModal } from "../components/PriceEntryModal";
+import type { PilotoRegisterId } from "../hooks/usePilotoCart";
 import { createPriceEntry, deletePriceEntry, listPriceEntries, updatePriceEntry } from "../piloto.api";
 import type { PilotoPriceCategory, PilotoPriceEntry } from "../piloto.types";
+
+type PilotoPricesScreenProps = {
+  registers: { id: PilotoRegisterId; count: number }[];
+  defaultRegisterId: PilotoRegisterId;
+  onAddToRegister: (registerId: PilotoRegisterId, price: number, name: string) => void;
+};
 
 // "Precios" -- Modo Pro (23/09/2026, pedido explicito): lista organizada
 // de precios por categoria, independiente de los productos reales del
@@ -23,13 +31,17 @@ function formatCurrency(amount: number) {
   }).format(amount);
 }
 
-export function PilotoPricesScreen() {
+export function PilotoPricesScreen({ registers, defaultRegisterId, onAddToRegister }: PilotoPricesScreenProps) {
   const [activeCategory, setActiveCategory] = useState<PilotoPriceCategory>(PRICE_CATEGORIES[0].id);
   const [entries, setEntries] = useState<PilotoPriceEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<PilotoPriceEntry | null>(null);
+  // "Agregar a la venta" (23/09/2026, pedido explicito): que precio se
+  // esta por mandar a una caja -- null = el modal de elegir caja esta
+  // cerrado.
+  const [addingEntry, setAddingEntry] = useState<PilotoPriceEntry | null>(null);
 
   function loadEntries() {
     setIsLoading(true);
@@ -67,6 +79,16 @@ export function PilotoPricesScreen() {
       toast.error(error instanceof Error ? error.message : "No se pudo guardar el precio.");
       return false;
     }
+  }
+
+  // Pedido explicito: "el boton Agregar utiliza el precio que esta
+  // configurado actualmente en Precios" -- toma entry.price tal como esta
+  // en ese momento (si se edito antes, ya es el precio nuevo).
+  function handleConfirmAddToRegister(registerId: PilotoRegisterId) {
+    if (!addingEntry) return;
+    onAddToRegister(registerId, addingEntry.price, addingEntry.name);
+    toast.success(`${addingEntry.name} agregado a Caja ${registerId}.`);
+    setAddingEntry(null);
   }
 
   async function handleDelete(entry: PilotoPriceEntry) {
@@ -125,6 +147,7 @@ export function PilotoPricesScreen() {
               <tr>
                 <th>Producto</th>
                 <th className="text-end">Precio</th>
+                <th className="text-center">Agregar</th>
                 <th className="text-center">Editar</th>
                 <th className="text-center piloto-cart-table__remove-col">Quitar</th>
               </tr>
@@ -136,6 +159,11 @@ export function PilotoPricesScreen() {
                     <div className="piloto-product-name">{entry.name}</div>
                   </td>
                   <td className="text-end piloto-cart-table__strong">{formatCurrency(entry.price)}</td>
+                  <td className="text-center">
+                    <button type="button" className="piloto-edit-btn" onClick={() => setAddingEntry(entry)}>
+                      Agregar
+                    </button>
+                  </td>
                   <td className="text-center">
                     <button
                       type="button"
@@ -180,6 +208,16 @@ export function PilotoPricesScreen() {
             if (ok) setIsModalOpen(false);
             return ok;
           }}
+        />
+      ) : null}
+
+      {addingEntry ? (
+        <AddToRegisterModal
+          itemLabel={`${addingEntry.name} — ${formatCurrency(addingEntry.price)}`}
+          registers={registers}
+          defaultRegisterId={defaultRegisterId}
+          onConfirm={handleConfirmAddToRegister}
+          onClose={() => setAddingEntry(null)}
         />
       ) : null}
     </>

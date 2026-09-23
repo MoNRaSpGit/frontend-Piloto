@@ -45,8 +45,12 @@ export function usePilotoCart(registerIds: PilotoRegisterId[] = DEFAULT_PILOTO_R
   const cartItems = activeRegister.cartItems;
   const lastScannedProductId = activeRegister.lastScannedProductId;
 
+  function updateRegister(registerId: PilotoRegisterId, updater: (state: RegisterState) => RegisterState) {
+    setRegisters((current) => ({ ...current, [registerId]: updater(current[registerId]) }));
+  }
+
   function updateActiveRegister(updater: (state: RegisterState) => RegisterState) {
-    setRegisters((current) => ({ ...current, [activeRegisterId]: updater(current[activeRegisterId]) }));
+    updateRegister(activeRegisterId, updater);
   }
 
   function addProduct(product: PilotoProduct) {
@@ -73,6 +77,23 @@ export function usePilotoCart(registerIds: PilotoRegisterId[] = DEFAULT_PILOTO_R
     nextManualIdRef.current -= 1;
 
     updateActiveRegister((state) => ({
+      cartItems: [{ productId, name, price, quantity: 1, imageUrl: null }, ...state.cartItems],
+      lastScannedProductId: productId
+    }));
+  }
+
+  // "Precios" -- Modo Pro (23/09/2026, pedido explicito): boton "Agregar"
+  // en cada precio, elige a que caja va (no necesariamente la activa --
+  // podes estar viendo Precios con Caja 1 activa y mandar el producto a
+  // Caja 2). Mismo mecanismo que addManualItem (id negativo, nunca
+  // producto real), solo que apunta a la caja que se elija en vez de
+  // siempre la activa. Una vez adentro, es indistinguible de un Producto
+  // Manual cargado a mano en esa caja.
+  function addManualItemToRegister(registerId: PilotoRegisterId, price: number, name: string) {
+    const productId = nextManualIdRef.current;
+    nextManualIdRef.current -= 1;
+
+    updateRegister(registerId, (state) => ({
       cartItems: [{ productId, name, price, quantity: 1, imageUrl: null }, ...state.cartItems],
       lastScannedProductId: productId
     }));
@@ -119,6 +140,7 @@ export function usePilotoCart(registerIds: PilotoRegisterId[] = DEFAULT_PILOTO_R
     lastScannedProductId,
     addProduct,
     addManualItem,
+    addManualItemToRegister,
     addOne,
     removeOne,
     updateItem,
