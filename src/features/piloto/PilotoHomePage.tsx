@@ -202,6 +202,12 @@ export function PilotoHomePage() {
     setQuickAddBarcode(null);
     setIsManualModalOpen(false);
     setEditingProductId(null);
+    // Empuje explicito (22/09/2026, pedido explicito): el efecto de mas
+    // arriba solo reenfoca cuando ALGUNO de esos 4 modales cambia de
+    // abierto a cerrado -- si ya estaban todos cerrados (el caso normal
+    // al tocar una pestana de caja), no se disparaba y el foco se quedaba
+    // en el boton de la pestana en vez de volver al buscador.
+    setFocusSignal((signal) => signal + 1);
   }
 
   // Pedido explicito (18/09/2026): "quitale cualquier cosa que tenga para
