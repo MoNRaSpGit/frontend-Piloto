@@ -137,41 +137,16 @@ input {
   border-bottom: 1px solid #e2e8f0;
 }
 
+/* Pedido explicito (24/09/2026): "quitale el logo y la palabra Pro,
+   solo dejale Piloto" -- sin icono, sin insignia, solo el texto. */
 .piloto-pro-brand {
-  display: flex;
-  align-items: center;
-  gap: 7px;
   border: none;
   background: none;
   padding: 0;
   cursor: default;
-  font: inherit;
-  color: inherit;
-}
-
-.piloto-pro-brand__mark {
-  display: inline-flex;
-  color: #94a3b8;
-  flex-shrink: 0;
-}
-
-.piloto-pro-brand__text {
-  display: flex;
-  align-items: center;
-  gap: 6px;
   font-size: 1.02rem;
   font-weight: 700;
   color: #334155;
-}
-
-.piloto-pro-badge {
-  padding: 0.05rem 0.35rem;
-  border-radius: 4px;
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: #94a3b8;
-  border: 1px solid #cbd5e1;
 }
 
 .piloto-pro-nav {
@@ -278,9 +253,30 @@ input {
   overflow-x: auto;
 }
 
+/* table-layout: fixed (24/09/2026, pedido explicito: "las columnas de
+   precio, agregar, editar estan desalineadas, los valores salen mas a la
+   derecha... su titulo esta centrado pero el producto sale mas a la
+   derecha") -- con layout automatico, el ancho de cada columna podia
+   terminar calculandose distinto entre el encabezado y las filas segun
+   el contenido, corriendo los botones. Con table-layout fijo y un ancho
+   explicito por columna (ver los th:nth-child de abajo), encabezado y
+   valores comparten exactamente la misma caja siempre. */
 .piloto-prices-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.piloto-prices-table th:nth-child(2) {
+  width: 100px;
+}
+
+.piloto-prices-table th:nth-child(3) {
+  width: 120px;
+}
+
+.piloto-prices-table th:nth-child(4) {
+  width: 100px;
 }
 
 .piloto-prices-table th {
@@ -319,19 +315,20 @@ input {
 }
 
 .piloto-prices-table__action-col {
-  width: 1%;
+  width: 76px;
   white-space: nowrap;
 }
 
 .piloto-prices-action-btn {
   min-height: 44px;
-  padding: 0 16px;
+  padding: 0 14px;
   border: 2px solid #cbd5e1;
   border-radius: 10px;
   background: #ffffff;
   color: #111;
   font-weight: 700;
-  font-size: 0.98rem;
+  font-size: 0.95rem;
+  white-space: nowrap;
   cursor: pointer;
 }
 

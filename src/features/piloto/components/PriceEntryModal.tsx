@@ -21,9 +21,16 @@ export function PriceEntryModal({ entry, categoryLabel, onClose, onSave }: Price
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const priceInputRef = useRef<HTMLInputElement>(null);
 
   useEscapeToCancel(!isSaving, onClose);
 
+  // Enter siempre funciona como OK (pedido explicito, 24/09/2026: "que el
+  // enter siga funcionando en toda la aplicacion como un OK... en la
+  // pestaña precios pongo un nuevo producto pero le doy Enter y no
+  // funciona"). Faltaba este detalle que ya tienen ManualProductModal y
+  // ScannerQuickAddModal: Enter en Nombre con el Precio todavia vacio va
+  // al Precio (el siguiente paso logico) en vez de mostrar un error.
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (isSaving) return;
@@ -35,9 +42,15 @@ export function PriceEntryModal({ entry, categoryLabel, onClose, onSave }: Price
       return;
     }
 
+    if (!priceInput.trim() && document.activeElement === nameInputRef.current) {
+      priceInputRef.current?.focus();
+      return;
+    }
+
     const parsedPrice = Number(priceInput.replace(",", "."));
     if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
       setError("Ingresa un precio valido mayor a 0.");
+      priceInputRef.current?.focus();
       return;
     }
 
@@ -80,6 +93,7 @@ export function PriceEntryModal({ entry, categoryLabel, onClose, onSave }: Price
           <label className="piloto-modal-field">
             <span>Precio</span>
             <input
+              ref={priceInputRef}
               value={priceInput}
               onChange={(event) => setPriceInput(event.target.value)}
               inputMode="decimal"
@@ -98,6 +112,7 @@ export function PriceEntryModal({ entry, categoryLabel, onClose, onSave }: Price
               {isSaving ? "Guardando..." : isEditing ? "Guardar" : "Agregar"}
             </button>
           </div>
+          <p className="piloto-enter-hint">Tecla Enter = {isEditing ? "Guardar" : "Agregar"}</p>
         </form>
       </div>
     </div>

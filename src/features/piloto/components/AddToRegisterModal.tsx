@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useEscapeToCancel } from "../hooks/useEscapeToCancel";
 import type { PilotoRegisterId } from "../hooks/usePilotoCart";
 
@@ -20,8 +20,18 @@ type AddToRegisterModalProps = {
 // se puede cambiar a Caja 2 y despues Confirmar.
 export function AddToRegisterModal({ itemLabel, registers, defaultRegisterId, onConfirm, onClose }: AddToRegisterModalProps) {
   const [selectedRegisterId, setSelectedRegisterId] = useState<PilotoRegisterId>(defaultRegisterId);
+  const confirmButtonRef = useRef<HTMLButtonElement>(null);
 
   useEscapeToCancel(true, onClose);
+
+  // Enter = OK en toda la app (pedido explicito, 24/09/2026). Este modal
+  // no tiene <form> (son botones, no campos de texto), asi que el foco
+  // inicial en "Confirmar" es lo que hace que Enter confirme apenas se
+  // abre -- mismo patron que el foco automatico de ScannerCheckout.
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => confirmButtonRef.current?.focus(), 0);
+    return () => window.clearTimeout(timeoutId);
+  }, []);
 
   return (
     <div className="piloto-modal-overlay" role="dialog" aria-modal="true" aria-label="Elegir caja">
@@ -53,10 +63,16 @@ export function AddToRegisterModal({ itemLabel, registers, defaultRegisterId, on
           <button type="button" className="piloto-button piloto-button--danger" onClick={onClose}>
             Cancelar
           </button>
-          <button type="button" className="piloto-button piloto-button--primary" onClick={() => onConfirm(selectedRegisterId)}>
+          <button
+            ref={confirmButtonRef}
+            type="button"
+            className="piloto-button piloto-button--primary"
+            onClick={() => onConfirm(selectedRegisterId)}
+          >
             Confirmar
           </button>
         </div>
+        <p className="piloto-enter-hint">Tecla Enter = Confirmar</p>
       </div>
     </div>
   );
