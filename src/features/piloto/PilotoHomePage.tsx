@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { createProduct, createSale, findProductByBarcode, normalizeBarcode, updateProduct } from "./piloto.api";
+import { CategoryIcon } from "./components/CategoryIcon";
 import { ManualProductModal } from "./components/ManualProductModal";
 import { PilotoModeModal } from "./components/PilotoModeModal";
+import { ProHeader } from "./components/ProHeader";
 import { RegisterTabs } from "./components/RegisterTabs";
 import { ScannerCart } from "./components/ScannerCart";
 import { ScannerCheckout } from "./components/ScannerCheckout";
@@ -10,6 +12,7 @@ import { ScannerInput } from "./components/ScannerInput";
 import { ScannerQuickAddModal } from "./components/ScannerQuickAddModal";
 import { usePilotoCart, type PilotoRegisterId } from "./hooks/usePilotoCart";
 import { usePilotoMode } from "./piloto.mode";
+import type { PilotoPriceCategory } from "./piloto.types";
 import { printSaleTicketByQz } from "./services/piloto.qzPrint";
 import { PilotoPricesScreen } from "./screens/PilotoPricesScreen";
 import { setAppBusy } from "../../shared/state/appActivity";
@@ -37,8 +40,16 @@ const MODE_UNLOCK_CLICK_COUNT = 3;
 // 4 botones de acceso rapido, Modo Pro (23/09/2026, pedido explicito):
 // "practicamente igual que Producto Manual... la diferencia principal es
 // el nombre que se asigna al producto". Reusan el mismo modal/logica --
-// ver manualModalLabel, handleManualConfirm.
-const QUICK_MANUAL_LABELS = ["Frutas y verduras", "Congelados", "Empanadas", "Otros"];
+// ver manualModalLabel, handleManualConfirm. Mismo id/orden que las
+// categorias de "Precios" (24/09/2026, pedido explicito de orden: Frutas
+// y verduras, Congelados, Empanadas, Otros) -- asi comparten el icono de
+// CategoryIcon.tsx, mismo dibujo para la misma categoria en toda la app.
+const QUICK_MANUAL_CATEGORIES: { id: PilotoPriceCategory; label: string }[] = [
+  { id: "frutas_verduras", label: "Frutas y verduras" },
+  { id: "congelados", label: "Congelados" },
+  { id: "empanadas", label: "Empanadas" },
+  { id: "otros", label: "Otros" }
+];
 
 export function PilotoHomePage() {
   const [barcodeInput, setBarcodeInput] = useState("");
@@ -339,40 +350,23 @@ export function PilotoHomePage() {
   }
 
   return (
-    <main className="piloto-shell">
-      <header className="piloto-header">
-        {/* Selector de modo oculto: 3 clics para abrirlo (ver
-            handleTitleClick). No tiene pinta de boton a proposito, para
-            que el usuario normal no note que hace algo. */}
-        <button type="button" className="piloto-kicker piloto-kicker--button" onClick={handleTitleClick}>
-          Piloto
-        </button>
-      </header>
-
-      {/* "Productos" / "Precios" -- solo Modo Pro (pedido explicito,
-          23/09/2026): "Precios" no existe en Basico. */}
+    <main className={isPro ? "piloto-shell piloto-shell--pro" : "piloto-shell"}>
       {isPro ? (
-        <div className="piloto-top-nav" role="tablist" aria-label="Secciones">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTopTab === "productos"}
-            className={activeTopTab === "productos" ? "piloto-top-tab is-active" : "piloto-top-tab"}
-            onClick={() => setActiveTopTab("productos")}
-          >
-            Productos
+        // Cabecera trabajada (24/09/2026, pedido explicito de mejora
+        // visual): logo + "Productos"/"Precios" integrados. Reemplaza al
+        // <header> simple de abajo Y a la barra de pestanas que antes iba
+        // separada -- ver ProHeader.tsx.
+        <ProHeader activeTopTab={activeTopTab} onSelectTab={setActiveTopTab} onTitleClick={handleTitleClick} />
+      ) : (
+        <header className="piloto-header">
+          {/* Selector de modo oculto: 3 clics para abrirlo (ver
+              handleTitleClick). No tiene pinta de boton a proposito, para
+              que el usuario normal no note que hace algo. */}
+          <button type="button" className="piloto-kicker piloto-kicker--button" onClick={handleTitleClick}>
+            Piloto
           </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={activeTopTab === "precios"}
-            className={activeTopTab === "precios" ? "piloto-top-tab is-active" : "piloto-top-tab"}
-            onClick={() => setActiveTopTab("precios")}
-          >
-            Precios
-          </button>
-        </div>
-      ) : null}
+        </header>
+      )}
 
       {/* Pedido explicito: "por defecto, dejar seleccionada Caja 1" (no
           necesariamente la que este activa en ese momento). */}
@@ -392,24 +386,27 @@ export function PilotoHomePage() {
             focusSignal={focusSignal}
           />
 
-          <button type="button" className="piloto-manual-btn" onClick={() => setManualModalLabel("Producto Manual")}>
-            Producto Manual
-          </button>
-
+          {/* Pedido explicito (24/09/2026): en Pro, los 4 botones de
+              categoria van primero y "Producto Manual" queda debajo. */}
           {isPro ? (
             <div className="piloto-quick-manual-grid">
-              {QUICK_MANUAL_LABELS.map((label) => (
+              {QUICK_MANUAL_CATEGORIES.map((category) => (
                 <button
-                  key={label}
+                  key={category.id}
                   type="button"
                   className="piloto-manual-btn piloto-manual-btn--quick"
-                  onClick={() => setManualModalLabel(label)}
+                  onClick={() => setManualModalLabel(category.label)}
                 >
-                  {label}
+                  <CategoryIcon category={category.id} />
+                  {category.label}
                 </button>
               ))}
             </div>
           ) : null}
+
+          <button type="button" className="piloto-manual-btn" onClick={() => setManualModalLabel("Producto Manual")}>
+            Producto Manual
+          </button>
 
           {cartItems.length ? (
             <>

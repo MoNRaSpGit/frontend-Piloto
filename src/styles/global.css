@@ -112,47 +112,125 @@ input {
   vertical-align: middle;
 }
 
-/* Nav superior Productos/Precios, solo Modo Pro (23/09/2026). Mismo look
-   que .piloto-register-tab (pestanas de caja), clase propia para no atar
-   ambas cosas entre si. */
-.piloto-top-nav {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  flex-wrap: wrap;
+/* ============================================================
+   Modo Pro -- mejora visual (24/09/2026, pedido explicito): "que se vea
+   y se sienta mas trabajado, atractivo, ordenado y profesional... el
+   Modo Basico mantiene su diseño actual". TODO lo de este bloque son
+   clases nuevas y exclusivas del Pro (prefijo piloto-pro-* / los
+   subcomponentes de precios): nada de esto lo usa ni lo ve el Basico, y
+   no se toco ninguna clase de las que SI comparten los dos modos
+   (piloto-cart-*, piloto-manual-btn, piloto-checkout, etc. siguen
+   exactamente igual).
+   ============================================================ */
+.piloto-shell--pro {
+  background-image: radial-gradient(circle at top, rgba(99, 102, 241, 0.05), transparent 55%);
 }
 
-.piloto-top-tab {
-  min-width: 120px;
-  padding: 0.65rem 1.4rem;
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #334155;
+/* Cabecera: logo + nav integrados (ver ProHeader.tsx). */
+.piloto-pro-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 16px;
   background: #ffffff;
-  border: 2px solid #cbd5e1;
+  border: 1px solid #e2e8f0;
+  border-bottom: 3px solid #6366f1;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+}
+
+.piloto-pro-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: default;
+  font: inherit;
+  color: inherit;
+}
+
+.piloto-pro-brand__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #111;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.piloto-pro-brand__text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #0f172a;
+}
+
+.piloto-pro-badge {
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #ffffff;
+  background: #6366f1;
+}
+
+.piloto-pro-nav {
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 999px;
+  background: #f1f5f9;
+}
+
+.piloto-pro-nav-tab {
+  min-width: 108px;
+  padding: 0.55rem 1.2rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #475569;
+  background: transparent;
+  border: none;
   border-radius: 999px;
   cursor: pointer;
 }
 
-.piloto-top-tab:hover {
-  border-color: #94a3b8;
+.piloto-pro-nav-tab:hover {
+  color: #0f172a;
 }
 
-.piloto-top-tab.is-active {
+.piloto-pro-nav-tab.is-active {
   color: #ffffff;
   background-color: #111;
-  border-color: #111;
 }
 
-/* Subpestanas de categoria dentro de "Precios" (23/09/2026). */
-.piloto-price-tabs {
+/* "Precios": subpestanas con icono. */
+.piloto-prices {
+  display: grid;
+  gap: 18px;
+}
+
+.piloto-prices-tabs {
   display: flex;
   justify-content: center;
   gap: 8px;
   flex-wrap: wrap;
 }
 
-.piloto-price-tab {
+.piloto-prices-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   padding: 0.55rem 1.1rem;
   font-size: 0.98rem;
   font-weight: 700;
@@ -163,14 +241,148 @@ input {
   cursor: pointer;
 }
 
-.piloto-price-tab:hover {
+.piloto-prices-tab:hover {
   border-color: #94a3b8;
 }
 
-.piloto-price-tab.is-active {
+.piloto-prices-tab.is-active {
   color: #ffffff;
-  background-color: #111;
-  border-color: #111;
+  background-color: #6366f1;
+  border-color: #6366f1;
+}
+
+.piloto-prices-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.piloto-prices-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 1.3rem;
+  color: #0f172a;
+}
+
+.piloto-prices-add-btn {
+  min-height: 52px;
+  padding: 0 1.4rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: #6366f1;
+  border: 1px solid #6366f1;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.piloto-prices-add-btn:hover {
+  background: #4f46e5;
+}
+
+.piloto-prices-panel {
+  padding: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+  overflow-x: auto;
+}
+
+.piloto-prices-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.piloto-prices-table th {
+  padding: 10px 12px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #94a3b8;
+  border-bottom: 1px solid #eef2f6;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.piloto-prices-table td {
+  padding: 12px;
+  vertical-align: middle;
+  border-bottom: 1px solid #f5f7fa;
+}
+
+.piloto-prices-table tr:last-child td {
+  border-bottom: none;
+}
+
+.piloto-prices-row-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.piloto-prices-row-price {
+  font-weight: 700;
+  font-size: 1.2rem;
+  white-space: nowrap;
+  color: #0f172a;
+}
+
+.piloto-prices-table__action-col {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.piloto-prices-action-btn {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 2px solid #cbd5e1;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #111;
+  font-weight: 700;
+  font-size: 0.98rem;
+  cursor: pointer;
+}
+
+.piloto-prices-action-btn:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.piloto-prices-action-btn--add {
+  color: #4f46e5;
+  border-color: rgba(99, 102, 241, 0.35);
+}
+
+.piloto-prices-action-btn--add:hover {
+  background: rgba(99, 102, 241, 0.08);
+  border-color: #6366f1;
+}
+
+.piloto-prices-remove-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 2px solid #b91c1c;
+  border-radius: 10px;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.piloto-prices-remove-btn:hover {
+  background: #b91c1c;
 }
 
 .piloto-scanner-dominant {
@@ -253,18 +465,24 @@ input {
 }
 
 .piloto-manual-btn--quick {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
   width: 100%;
-  min-height: 52px;
+  min-height: 58px;
   padding: 0.6rem 1rem;
   font-size: 1.05rem;
   background-color: #ffffff;
-  color: #111;
-  border: 2px solid #111;
+  color: #4338ca;
+  border: 2px solid rgba(99, 102, 241, 0.35);
+  border-radius: 12px;
 }
 
 .piloto-manual-btn--quick:hover {
-  background-color: #111;
+  background-color: #6366f1;
   color: #fff;
+  border-color: #6366f1;
 }
 
 .piloto-empty-state {

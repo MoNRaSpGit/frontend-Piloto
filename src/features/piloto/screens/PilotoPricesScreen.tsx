@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { AddToRegisterModal } from "../components/AddToRegisterModal";
+import { CategoryIcon } from "../components/CategoryIcon";
 import { PriceEntryModal } from "../components/PriceEntryModal";
 import type { PilotoRegisterId } from "../hooks/usePilotoCart";
 import { createPriceEntry, deletePriceEntry, listPriceEntries, updatePriceEntry } from "../piloto.api";
@@ -16,6 +17,11 @@ type PilotoPricesScreenProps = {
 // de precios por categoria, independiente de los productos reales del
 // escaner (no se convierten en productos del carrito). 4 categorias fijas,
 // sin buscador por ahora (pocos productos).
+//
+// Todas las clases visuales de esta pantalla son propias
+// (piloto-prices-*), NO se reusan las del carrito/escaner -- esos
+// componentes tambien los usa el Modo Basico, y la mejora visual de
+// 24/09/2026 fue pedida SOLO para Pro, sin tocar el look del Basico.
 const PRICE_CATEGORIES: { id: PilotoPriceCategory; label: string }[] = [
   { id: "congelados", label: "Congelados" },
   { id: "frutas_verduras", label: "Frutas y verduras" },
@@ -104,32 +110,39 @@ export function PilotoPricesScreen({ registers, defaultRegisterId, onAddToRegist
   }
 
   return (
-    <>
-      <div className="piloto-price-tabs" role="tablist" aria-label="Categorias de precios">
+    <div className="piloto-prices">
+      <div className="piloto-prices-tabs" role="tablist" aria-label="Categorias de precios">
         {PRICE_CATEGORIES.map((category) => (
           <button
             key={category.id}
             type="button"
             role="tab"
             aria-selected={category.id === activeCategory}
-            className={category.id === activeCategory ? "piloto-price-tab is-active" : "piloto-price-tab"}
+            className={category.id === activeCategory ? "piloto-prices-tab is-active" : "piloto-prices-tab"}
             onClick={() => setActiveCategory(category.id)}
           >
+            <CategoryIcon category={category.id} size={19} />
             {category.label}
           </button>
         ))}
       </div>
 
-      <button
-        type="button"
-        className="piloto-manual-btn"
-        onClick={() => {
-          setEditingEntry(null);
-          setIsModalOpen(true);
-        }}
-      >
-        + Agregar
-      </button>
+      <div className="piloto-prices-toolbar">
+        <h2 className="piloto-prices-heading">
+          <CategoryIcon category={activeCategory} size={22} />
+          {activeCategoryLabel}
+        </h2>
+        <button
+          type="button"
+          className="piloto-prices-add-btn"
+          onClick={() => {
+            setEditingEntry(null);
+            setIsModalOpen(true);
+          }}
+        >
+          <span aria-hidden="true">+</span> Agregar
+        </button>
+      </div>
 
       {isLoading ? (
         <p className="piloto-scanner-status">Cargando precios...</p>
@@ -141,33 +154,37 @@ export function PilotoPricesScreen({ registers, defaultRegisterId, onAddToRegist
           </button>
         </section>
       ) : visibleEntries.length ? (
-        <section className="piloto-cart-panel">
-          <table className="piloto-cart-table">
+        <section className="piloto-prices-panel">
+          <table className="piloto-prices-table">
             <thead>
               <tr>
                 <th>Producto</th>
                 <th className="text-end">Precio</th>
                 <th className="text-center">Agregar</th>
                 <th className="text-center">Editar</th>
-                <th className="text-center piloto-cart-table__remove-col">Quitar</th>
+                <th className="text-center piloto-prices-table__action-col">Quitar</th>
               </tr>
             </thead>
             <tbody>
               {visibleEntries.map((entry) => (
                 <tr key={entry.id}>
-                  <td className="piloto-cart-table__product">
-                    <div className="piloto-product-name">{entry.name}</div>
+                  <td>
+                    <div className="piloto-prices-row-name">{entry.name}</div>
                   </td>
-                  <td className="text-end piloto-cart-table__strong">{formatCurrency(entry.price)}</td>
+                  <td className="text-end piloto-prices-row-price">{formatCurrency(entry.price)}</td>
                   <td className="text-center">
-                    <button type="button" className="piloto-edit-btn" onClick={() => setAddingEntry(entry)}>
+                    <button
+                      type="button"
+                      className="piloto-prices-action-btn piloto-prices-action-btn--add"
+                      onClick={() => setAddingEntry(entry)}
+                    >
                       Agregar
                     </button>
                   </td>
                   <td className="text-center">
                     <button
                       type="button"
-                      className="piloto-edit-btn"
+                      className="piloto-prices-action-btn"
                       onClick={() => {
                         setEditingEntry(entry);
                         setIsModalOpen(true);
@@ -176,10 +193,10 @@ export function PilotoPricesScreen({ registers, defaultRegisterId, onAddToRegist
                       Editar
                     </button>
                   </td>
-                  <td className="piloto-cart-table__remove-col">
+                  <td className="piloto-prices-table__action-col">
                     <button
                       type="button"
-                      className="piloto-cart-row__remove"
+                      className="piloto-prices-remove-btn"
                       onClick={() => void handleDelete(entry)}
                       aria-label={`Eliminar ${entry.name}`}
                       title="Eliminar"
@@ -220,6 +237,6 @@ export function PilotoPricesScreen({ registers, defaultRegisterId, onAddToRegist
           onClose={() => setAddingEntry(null)}
         />
       ) : null}
-    </>
+    </div>
   );
 }
