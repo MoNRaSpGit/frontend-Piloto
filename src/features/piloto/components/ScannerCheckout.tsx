@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useEscapeToCancel } from "../hooks/useEscapeToCancel";
 
 type ScannerCheckoutProps = {
   total: number;
@@ -31,6 +32,11 @@ export function ScannerCheckout({ total, isOpen, onOpen, onClose, onCharge }: Sc
     const timeoutId = window.setTimeout(() => confirmButtonRef.current?.focus(), 0);
     return () => window.clearTimeout(timeoutId);
   }, [isOpen]);
+
+  // ESC = Cancelar (pedido explicito, 22/09/2026) -- no cancela mientras
+  // se esta confirmando el cobro, igual que el boton Cancelar (ver
+  // disabled mas abajo).
+  useEscapeToCancel(isOpen && !isSubmitting, onClose);
 
   // Guarda contra doble cobro: state no alcanza (dos Enter en el mismo
   // instante leen el mismo valor viejo), asi que se usa un ref.

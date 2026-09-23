@@ -8,6 +8,7 @@ import { ScannerCheckout } from "./components/ScannerCheckout";
 import { ScannerInput } from "./components/ScannerInput";
 import { ScannerQuickAddModal } from "./components/ScannerQuickAddModal";
 import { usePilotoCart, type PilotoRegisterId } from "./hooks/usePilotoCart";
+import { setAppBusy } from "../../shared/state/appActivity";
 
 const NOT_FOUND_MESSAGE = "Producto no encontrado.";
 // Ya no se elige medio de pago en la UI (pedido explicito, 16/09/2026:
@@ -61,6 +62,16 @@ export function PilotoHomePage() {
       setFocusSignal((signal) => signal + 1);
     }
   }, [isCheckoutOpen, quickAddBarcode, isManualModalOpen, editingProductId]);
+
+  // Le avisa a AppUpdateNotice si es seguro actualizar solo (pedido
+  // explicito, 22/09/2026): "ocupada" = hay algun modal/proceso abierto O
+  // hay productos cargados en CUALQUIER caja (no solo la activa -- Caja 2
+  // puede tener una venta pendiente mientras se mira la Caja 1 vacia).
+  const hasPendingProducts = registerSummaries.some((register) => register.count > 0);
+  useEffect(() => {
+    setAppBusy(hasPendingProducts || isCheckoutOpen || !!quickAddBarcode || isManualModalOpen || editingProductId !== null);
+    return () => setAppBusy(false);
+  }, [hasPendingProducts, isCheckoutOpen, quickAddBarcode, isManualModalOpen, editingProductId]);
 
   // Atajo de teclado (20/09/2026, pedido explicito: "cambiar de boton a las
   // flechitas... que predomine la flechita, sin importar q este en un input

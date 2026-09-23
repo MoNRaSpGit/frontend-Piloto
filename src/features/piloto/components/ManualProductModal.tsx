@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEscapeToCancel } from "../hooks/useEscapeToCancel";
 
 type ManualProductModalProps = {
   onClose: () => void;
@@ -9,6 +10,9 @@ export function ManualProductModal({ onClose, onConfirm }: ManualProductModalPro
   const [priceInput, setPriceInput] = useState("");
   const [error, setError] = useState("");
   const priceInputRef = useRef<HTMLInputElement>(null);
+
+  // ESC = Cancelar (pedido explicito, 22/09/2026).
+  useEscapeToCancel(true, onClose);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {

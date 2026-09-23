@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEscapeToCancel } from "../hooks/useEscapeToCancel";
 
 type ScannerQuickAddModalProps = {
   barcode: string;
@@ -13,6 +14,10 @@ export function ScannerQuickAddModal({ barcode, onClose, onConfirm }: ScannerQui
   const [isSubmitting, setIsSubmitting] = useState(false);
   const priceInputRef = useRef<HTMLInputElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
+
+  // ESC = Cancelar (pedido explicito, 22/09/2026) -- no cancela mientras
+  // se esta guardando, igual que el boton Cancelar (ver disabled mas abajo).
+  useEscapeToCancel(!isSubmitting, onClose);
 
   // El cursor va directo al precio: es el unico dato obligatorio para dar de alta rapido.
   useEffect(() => {

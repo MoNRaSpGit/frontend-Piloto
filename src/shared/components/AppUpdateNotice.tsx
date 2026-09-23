@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchPublishedFrontendBuildMeta, FRONTEND_BUILD_INFO } from "../config/build";
+import { isAppIdle } from "../state/appActivity";
 
 const UPDATE_CHECK_INTERVAL_MS = 2 * 60 * 1000;
 const APP_CACHE_PREFIX = "piloto-";
@@ -14,11 +15,24 @@ export function AppUpdateNotice() {
     }
 
     let mounted = true;
+    // Pedido explicito (22/09/2026): "nunca interrumpir una venta en
+    // curso". Si hay una version nueva Y la app esta inactiva (sin
+    // productos cargados, sin ningun modal/proceso abierto, sin
+    // interaccion reciente -- ver appActivity.ts), se actualiza sola sin
+    // pedirle nada al operario. Si esta en uso, se mantiene el cartel de
+    // siempre para que decida cuando actualizar.
     const checkForUpdates = async () => {
       try {
         const published = await fetchPublishedFrontendBuildMeta();
         if (!mounted) return;
-        setShow(published.releaseSha !== FRONTEND_BUILD_INFO.releaseSha);
+        const updateAvailable = published.releaseSha !== FRONTEND_BUILD_INFO.releaseSha;
+
+        if (updateAvailable && isAppIdle()) {
+          await handleUpdate();
+          return;
+        }
+
+        setShow(updateAvailable);
       } catch {
         if (mounted) {
           setShow(false);

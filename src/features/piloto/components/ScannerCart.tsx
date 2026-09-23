@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEscapeToCancel } from "../hooks/useEscapeToCancel";
 import type { CartItem } from "../piloto.types";
 
 type ScannerCartProps = {
@@ -60,6 +61,10 @@ function EditItemModal({
   const [isSaving, setIsSaving] = useState(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const priceInputRef = useRef<HTMLInputElement>(null);
+
+  // ESC = Cancelar (pedido explicito, 22/09/2026) -- no cancela mientras
+  // se esta guardando, igual que el boton Cancelar (ver disabled mas abajo).
+  useEscapeToCancel(!isSaving, onClose);
 
   useEffect(() => {
     setName(item.name === "S/N" ? "" : item.name);
