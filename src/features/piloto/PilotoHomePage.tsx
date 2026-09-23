@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "react-toastify";
 import { createProduct, createSale, findProductByBarcode, normalizeBarcode, updateProduct } from "./piloto.api";
-import { CategoryIcon } from "./components/CategoryIcon";
+import { CategoryIcon, WeightIcon } from "./components/CategoryIcon";
 import { ManualProductModal } from "./components/ManualProductModal";
 import { PilotoModeModal } from "./components/PilotoModeModal";
 import { ProHeader } from "./components/ProHeader";
@@ -12,7 +12,6 @@ import { ScannerInput } from "./components/ScannerInput";
 import { ScannerQuickAddModal } from "./components/ScannerQuickAddModal";
 import { usePilotoCart, type PilotoRegisterId } from "./hooks/usePilotoCart";
 import { usePilotoMode } from "./piloto.mode";
-import type { PilotoPriceCategory } from "./piloto.types";
 import { printSaleTicketByQz } from "./services/piloto.qzPrint";
 import { PilotoPricesScreen } from "./screens/PilotoPricesScreen";
 import { setAppBusy } from "../../shared/state/appActivity";
@@ -40,16 +39,25 @@ const MODE_UNLOCK_CLICK_COUNT = 3;
 // 4 botones de acceso rapido, Modo Pro (23/09/2026, pedido explicito):
 // "practicamente igual que Producto Manual... la diferencia principal es
 // el nombre que se asigna al producto". Reusan el mismo modal/logica --
-// ver manualModalLabel, handleManualConfirm. Mismo id/orden que las
-// categorias de "Precios" (24/09/2026, pedido explicito de orden: Frutas
-// y verduras, Congelados, Empanadas, Otros) -- asi comparten el icono de
-// CategoryIcon.tsx, mismo dibujo para la misma categoria en toda la app.
-const QUICK_MANUAL_CATEGORIES: { id: PilotoPriceCategory; label: string }[] = [
-  { id: "frutas_verduras", label: "Frutas y verduras" },
-  { id: "congelados", label: "Congelados" },
-  { id: "empanadas", label: "Empanadas" },
-  { id: "otros", label: "Otros" }
+// ver manualModalLabel, handleManualConfirm. Los primeros 3 comparten el
+// icono de CategoryIcon.tsx con las categorias de "Precios" (misma
+// categoria, mismo dibujo en toda la app); "Prod. por kg" (24/09/2026,
+// pedido explicito: reemplaza a "Otros" en ESTOS botones -- Precios
+// sigue teniendo sus 4 categorias de siempre, esto es aparte) usa su
+// propio icono, no es una categoria de Precios.
+const QUICK_MANUAL_BUTTONS: { label: string; icon: ReactNode }[] = [
+  { label: "Frutas y verduras", icon: <CategoryIcon category="frutas_verduras" size={18} /> },
+  { label: "Congelados", icon: <CategoryIcon category="congelados" size={18} /> },
+  { label: "Empanadas", icon: <CategoryIcon category="empanadas" size={18} /> },
+  { label: "Prod. por kg", icon: <WeightIcon size={18} /> }
 ];
+
+// Orden del "carrusel" de flechas (24/09/2026, pedido explicito): "si
+// aprieto para arriba sigue abriendo el manual, pero si aprieto de nuevo
+// cambia al otro boton... y si sigo apretando va girando hasta que
+// selecione un boton". "Producto Manual" primero (igual que siempre al
+// primer toque), despues los 4 botones de arriba, y vuelve a empezar.
+const ARROW_CYCLE_LABELS = ["Producto Manual", ...QUICK_MANUAL_BUTTONS.map((button) => button.label)];
 
 export function PilotoHomePage() {
   const [barcodeInput, setBarcodeInput] = useState("");
@@ -148,8 +156,17 @@ export function PilotoHomePage() {
   // Cualquiera de las 4 flechas abre "Producto manual", igual que si se
   // clickeara el boton -- INCLUSO si el foco esta en un input, salvo
   // izquierda/derecha dentro de un campo editable, que se dejan mover el
-  // cursor (ver DOMINANT_ARROW_KEYS mas arriba). No duplica modales si ya
-  // hay otro abierto.
+  // cursor (ver DOMINANT_ARROW_KEYS mas arriba).
+  //
+  // "Carrusel" (24/09/2026, pedido explicito): en Modo Pro, si el modal ya
+  // esta abierto y se aprieta una flecha de nuevo, en vez de no hacer nada
+  // pasa al SIGUIENTE de ARROW_CYCLE_LABELS (Producto Manual -> Frutas y
+  // verduras -> Congelados -> Empanadas -> Prod. por kg -> vuelve a
+  // Producto Manual), sin cerrar el modal -- el titulo cambia solo. En
+  // Basico solo existe "Producto Manual" en el ciclo, asi que apretar de
+  // nuevo no cambia nada (no hay a donde ir). El resto de modales
+  // (cobro, alta rapida, edicion) siguen bloqueando el atajo igual que
+  // antes.
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (!ARROW_KEYS.has(event.key)) return;
@@ -163,17 +180,25 @@ export function PilotoHomePage() {
           target.isContentEditable);
       if (isEditable && !DOMINANT_ARROW_KEYS.has(event.key)) return;
 
-      if (manualModalLabel !== null || isCheckoutOpen || quickAddBarcode || editingProductId !== null) return;
+      if (isCheckoutOpen || quickAddBarcode || editingProductId !== null) return;
 
       // preventDefault: que la flecha no mueva el foco entre botones ni
       // haga scroll de la pagina.
       event.preventDefault();
-      setManualModalLabel("Producto Manual");
+
+      const cycle = isPro ? ARROW_CYCLE_LABELS : ["Producto Manual"];
+      if (manualModalLabel === null) {
+        setManualModalLabel(cycle[0]);
+        return;
+      }
+      const currentIndex = cycle.indexOf(manualModalLabel);
+      const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % cycle.length;
+      setManualModalLabel(cycle[nextIndex]);
     }
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [manualModalLabel, isCheckoutOpen, quickAddBarcode, editingProductId]);
+  }, [manualModalLabel, isCheckoutOpen, quickAddBarcode, editingProductId, isPro]);
 
   function handleEmptyEnter() {
     if (!cartItems.length) return;
@@ -350,7 +375,7 @@ export function PilotoHomePage() {
   }
 
   return (
-    <main className={isPro ? "piloto-shell piloto-shell--pro" : "piloto-shell"}>
+    <main className="piloto-shell">
       {isPro ? (
         // Cabecera trabajada (24/09/2026, pedido explicito de mejora
         // visual): logo + "Productos"/"Precios" integrados. Reemplaza al
@@ -390,15 +415,15 @@ export function PilotoHomePage() {
               categoria van primero y "Producto Manual" queda debajo. */}
           {isPro ? (
             <div className="piloto-quick-manual-grid">
-              {QUICK_MANUAL_CATEGORIES.map((category) => (
+              {QUICK_MANUAL_BUTTONS.map((button) => (
                 <button
-                  key={category.id}
+                  key={button.label}
                   type="button"
                   className="piloto-manual-btn piloto-manual-btn--quick"
-                  onClick={() => setManualModalLabel(category.label)}
+                  onClick={() => setManualModalLabel(button.label)}
                 >
-                  <CategoryIcon category={category.id} />
-                  {category.label}
+                  {button.icon}
+                  {button.label}
                 </button>
               ))}
             </div>
@@ -427,7 +452,9 @@ export function PilotoHomePage() {
                 onCharge={handleCharge}
               />
             </>
-          ) : (
+          ) : isPro ? null : (
+            // Pedido explicito (24/09/2026): en Pro, sin este cartel --
+            // "que no se vea tan cargada la web". En Basico sigue igual.
             <section className="piloto-empty-state">
               <p>Todavia no escaneaste ningun producto.</p>
             </section>

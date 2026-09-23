@@ -65,3 +65,26 @@ export function CategoryIcon({ category, size = 22 }: CategoryIconProps) {
     </svg>
   );
 }
+
+// "Prod. por kg" (24/09/2026, pedido explicito): reemplaza al boton
+// "Otros" en la venta rapida -- NO es una categoria de Precios (esas 4
+// siguen igual), por eso vive aparte de CategoryIcon en vez de sumarse
+// como un quinto valor de PilotoPriceCategory. Pesa/balanza simple.
+export function WeightIcon({ size = 22 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="15" r="6" />
+      <path d="M9.3 9c.2-2.2 1.2-4.3 2.7-4.3S14.5 6.8 14.7 9" />
+    </svg>
+  );
+}

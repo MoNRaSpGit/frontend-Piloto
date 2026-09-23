@@ -122,29 +122,25 @@ input {
    (piloto-cart-*, piloto-manual-btn, piloto-checkout, etc. siguen
    exactamente igual).
    ============================================================ */
-.piloto-shell--pro {
-  background-image: radial-gradient(circle at top, rgba(99, 102, 241, 0.05), transparent 55%);
-}
-
-/* Cabecera: logo + nav integrados (ver ProHeader.tsx). */
+/* Cabecera clasica, chica y sin protagonismo (24/09/2026, pedido
+   explicito: "mas clasica todavia... que pierda protagonismo la
+   cabecera ya que se va a usar poco... la cabecera mas finita"). Una
+   barra fina pegada arriba, sin tarjeta ni sombra, todo alineado a la
+   izquierda en vez de repartido -- logo y pestanas juntos, como un
+   navbar clasico de toda la vida. Ver ProHeader.tsx. */
 .piloto-pro-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   flex-wrap: wrap;
-  gap: 14px;
-  padding: 14px 18px;
-  border-radius: 16px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-bottom: 3px solid #6366f1;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+  gap: 22px;
+  padding: 6px 2px 10px;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .piloto-pro-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 7px;
   border: none;
   background: none;
   padding: 0;
@@ -155,53 +151,42 @@ input {
 
 .piloto-pro-brand__mark {
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: #111;
-  color: #ffffff;
+  color: #94a3b8;
   flex-shrink: 0;
 }
 
 .piloto-pro-brand__text {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 1.25rem;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-  color: #0f172a;
+  gap: 6px;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: #334155;
 }
 
 .piloto-pro-badge {
-  padding: 0.15rem 0.5rem;
-  border-radius: 999px;
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  color: #ffffff;
-  background: #6366f1;
+  padding: 0.05rem 0.35rem;
+  border-radius: 4px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #94a3b8;
+  border: 1px solid #cbd5e1;
 }
 
 .piloto-pro-nav {
   display: flex;
-  gap: 6px;
-  padding: 4px;
-  border-radius: 999px;
-  background: #f1f5f9;
+  gap: 20px;
 }
 
 .piloto-pro-nav-tab {
-  min-width: 108px;
-  padding: 0.55rem 1.2rem;
-  font-size: 1rem;
-  font-weight: 700;
-  color: #475569;
-  background: transparent;
+  padding: 4px 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #64748b;
+  background: none;
   border: none;
-  border-radius: 999px;
+  border-bottom: 2px solid transparent;
   cursor: pointer;
 }
 
@@ -210,8 +195,8 @@ input {
 }
 
 .piloto-pro-nav-tab.is-active {
-  color: #ffffff;
-  background-color: #111;
+  color: #0f172a;
+  border-bottom-color: #6366f1;
 }
 
 /* "Precios": subpestanas con icono. */
@@ -464,25 +449,30 @@ input {
   margin: 0 auto;
 }
 
+/* Mas finitos, sin protagonismo (24/09/2026, pedido explicito: "vamos a
+   hacerlos mas finitos, no tan altos... sacale protagonismo a los
+   botones") -- gris neutro en vez del acento morado bien marcado, mismo
+   idioma visual que un boton secundario comun. */
 .piloto-manual-btn--quick {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 9px;
+  gap: 8px;
   width: 100%;
-  min-height: 58px;
-  padding: 0.6rem 1rem;
-  font-size: 1.05rem;
+  min-height: 42px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.95rem;
+  font-weight: 600;
   background-color: #ffffff;
-  color: #4338ca;
-  border: 2px solid rgba(99, 102, 241, 0.35);
-  border-radius: 12px;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
 }
 
 .piloto-manual-btn--quick:hover {
-  background-color: #6366f1;
-  color: #fff;
-  border-color: #6366f1;
+  background-color: #f8fafc;
+  border-color: #94a3b8;
+  color: #0f172a;
 }
 
 .piloto-empty-state {
