@@ -8,6 +8,7 @@ import { ScannerCheckout } from "./components/ScannerCheckout";
 import { ScannerInput } from "./components/ScannerInput";
 import { ScannerQuickAddModal } from "./components/ScannerQuickAddModal";
 import { usePilotoCart, type PilotoRegisterId } from "./hooks/usePilotoCart";
+import { printSaleTicketByQz } from "./services/piloto.qzPrint";
 import { setAppBusy } from "../../shared/state/appActivity";
 
 const NOT_FOUND_MESSAGE = "Producto no encontrado.";
@@ -217,9 +218,30 @@ export function PilotoHomePage() {
   // por ahora la venta se confirma y listo, sin tocar nada de impresion.
   async function handleCharge() {
     try {
+      const ticketItems = cartItems;
+      const ticketTotal = total;
       await createSale(cartItems, FIXED_PAYMENT_METHOD);
       clearCart();
       toast.success("Venta confirmada.");
+
+      // Impresion por QZ Tray (22/09/2026, pedido explicito): "si hay
+      // impresora imprime y listo, si no hay no imprime claramente pero
+      // no tranca la venta ni nada de eso". La venta ya quedo confirmada
+      // y el carrito ya se vacio arriba -- esto se dispara SIN esperar
+      // (sin await) para que el modal de cobro se cierre al toque, sin
+      // quedar colgado mientras QZ Tray intenta conectar (puede tardar
+      // si esta cerrado o no hay impresora). El error, si lo hay, se
+      // avisa cuando llegue, aparte.
+      void printSaleTicketByQz({
+        externalId: `piloto-${Date.now()}`,
+        chargedAtIso: new Date().toISOString(),
+        paymentMethod: FIXED_PAYMENT_METHOD,
+        items: ticketItems,
+        total: ticketTotal
+      }).catch((printError) => {
+        toast.error(printError instanceof Error ? `No se pudo imprimir: ${printError.message}` : "No se pudo imprimir el ticket.");
+      });
+
       return true;
     } catch (chargeError) {
       toast.error(chargeError instanceof Error ? chargeError.message : "No se pudo confirmar la venta.");
