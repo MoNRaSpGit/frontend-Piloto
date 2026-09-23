@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { createProduct, createSale, findProductByBarcode, normalizeBarcode, updateProduct } from "./piloto.api";
 import { ManualProductModal } from "./components/ManualProductModal";
+import { RegisterTabs } from "./components/RegisterTabs";
 import { ScannerCart } from "./components/ScannerCart";
 import { ScannerCheckout } from "./components/ScannerCheckout";
 import { ScannerInput } from "./components/ScannerInput";
 import { ScannerQuickAddModal } from "./components/ScannerQuickAddModal";
-import { usePilotoCart } from "./hooks/usePilotoCart";
+import { usePilotoCart, type PilotoRegisterId } from "./hooks/usePilotoCart";
 
 const NOT_FOUND_MESSAGE = "Producto no encontrado.";
 // Ya no se elige medio de pago en la UI (pedido explicito, 16/09/2026:
@@ -34,8 +35,20 @@ export function PilotoHomePage() {
   // explicito (16/09/2026): "cierro un producto... siempre el cursor
   // vuelve al input".
   const [editingProductId, setEditingProductId] = useState<number | null>(null);
-  const { cartItems, lastScannedProductId, addProduct, addManualItem, addOne, removeOne, updateItem, clearCart, total } =
-    usePilotoCart();
+  const {
+    cartItems,
+    lastScannedProductId,
+    addProduct,
+    addManualItem,
+    addOne,
+    removeOne,
+    updateItem,
+    clearCart,
+    total,
+    activeRegisterId,
+    setActiveRegisterId,
+    registerSummaries
+  } = usePilotoCart();
 
   // Al cerrarse CUALQUIER modal (cobro, alta rapida, producto manual o
   // edicion de un producto del carrito), devolver el foco al input del
@@ -165,6 +178,21 @@ export function PilotoHomePage() {
     setIsManualModalOpen(false);
   }
 
+  // Al cambiar de caja se cierra cualquier modal que hubiera quedado
+  // abierto (cobro, alta rapida, edicion) -- esos modales actuan sobre el
+  // carrito de la caja que estaba activa, y seguir con uno abierto
+  // apuntando a la caja anterior podria terminar agregando o editando algo
+  // en la caja equivocada. El foco vuelve solo al buscador (ver el efecto
+  // de mas arriba, que reacciona a que no quede ningun modal abierto).
+  function handleSelectRegister(registerId: PilotoRegisterId) {
+    if (registerId === activeRegisterId) return;
+    setActiveRegisterId(registerId);
+    setIsCheckoutOpen(false);
+    setQuickAddBarcode(null);
+    setIsManualModalOpen(false);
+    setEditingProductId(null);
+  }
+
   // Pedido explicito (18/09/2026): "quitale cualquier cosa que tenga para
   // imprimir, todavia no vamos a imprimir... que ponga cobrar y que cobre
   // y chao, y empiece todo de vuelta". Se sacó el intento de imprimir
@@ -186,8 +214,9 @@ export function PilotoHomePage() {
     <main className="piloto-shell">
       <header className="piloto-header">
         <p className="piloto-kicker">Piloto</p>
-        <h1>Escaneo de productos</h1>
       </header>
+
+      <RegisterTabs registers={registerSummaries} activeRegisterId={activeRegisterId} onSelect={handleSelectRegister} />
 
       <ScannerInput
         value={barcodeInput}

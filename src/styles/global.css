@@ -54,6 +54,54 @@ input {
   font-size: clamp(1.9rem, 5.5vw, 2.7rem);
 }
 
+/* Pestanas de caja (22/09/2026): centradas, arriba del input de escaneo.
+   Ver RegisterTabs.tsx. */
+.piloto-register-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.piloto-register-tab {
+  position: relative;
+  min-width: 120px;
+  padding: 0.65rem 1.4rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #334155;
+  background: #ffffff;
+  border: 2px solid #cbd5e1;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.piloto-register-tab:hover {
+  border-color: #94a3b8;
+}
+
+.piloto-register-tab.is-active {
+  color: #ffffff;
+  background-color: #111;
+  border-color: #111;
+}
+
+.piloto-register-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  margin-left: 8px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #ffffff;
+  background-color: #dc2626;
+  vertical-align: middle;
+}
+
 .piloto-scanner-dominant {
   padding: 20px;
   border: 1px solid #dbe4ee;
