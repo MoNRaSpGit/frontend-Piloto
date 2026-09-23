@@ -64,12 +64,16 @@ export function usePilotoCart(registerIds: PilotoRegisterId[] = DEFAULT_PILOTO_R
 
   // Producto sin codigo (ej: fruta/verdura suelta): siempre crea una linea nueva,
   // nunca suma cantidad a una existente, y jamas se guarda como producto real.
-  function addManualItem(price: number) {
+  // `name` (23/09/2026, pedido explicito): los 4 botones de categoria de
+  // Modo Pro reusan este mismo metodo, solo cambiando el nombre que queda
+  // en la venta -- "Producto Manual" sigue siendo el valor por defecto,
+  // asi que el boton original no cambia en nada.
+  function addManualItem(price: number, name: string = "Producto Manual") {
     const productId = nextManualIdRef.current;
     nextManualIdRef.current -= 1;
 
     updateActiveRegister((state) => ({
-      cartItems: [{ productId, name: "Producto Manual", price, quantity: 1, imageUrl: null }, ...state.cartItems],
+      cartItems: [{ productId, name, price, quantity: 1, imageUrl: null }, ...state.cartItems],
       lastScannedProductId: productId
     }));
   }

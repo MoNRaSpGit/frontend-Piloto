@@ -2,11 +2,17 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useEscapeToCancel } from "../hooks/useEscapeToCancel";
 
 type ManualProductModalProps = {
+  // Los 4 botones de categoria de Modo Pro (23/09/2026, pedido explicito)
+  // reusan este mismo modal, solo cambiando el titulo -- para que se vea a
+  // simple vista que precio se esta por cargar antes de escribirlo. El
+  // boton original "Producto Manual" no pasa `title`, asi que se comporta
+  // identico a como era antes.
+  title?: string;
   onClose: () => void;
   onConfirm: (price: number) => void;
 };
 
-export function ManualProductModal({ onClose, onConfirm }: ManualProductModalProps) {
+export function ManualProductModal({ title = "Producto Manual", onClose, onConfirm }: ManualProductModalProps) {
   const [priceInput, setPriceInput] = useState("");
   const [error, setError] = useState("");
   const priceInputRef = useRef<HTMLInputElement>(null);
@@ -35,10 +41,10 @@ export function ManualProductModal({ onClose, onConfirm }: ManualProductModalPro
   }
 
   return (
-    <div className="piloto-modal-overlay" role="dialog" aria-modal="true" aria-label="Producto manual">
+    <div className="piloto-modal-overlay" role="dialog" aria-modal="true" aria-label={title}>
       <div className="piloto-modal-card">
         <div className="piloto-modal-card__header">
-          <h2>Producto Manual</h2>
+          <h2>{title}</h2>
           <button type="button" className="piloto-modal-close" onClick={onClose}>
             Cerrar
           </button>

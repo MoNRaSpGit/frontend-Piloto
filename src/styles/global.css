@@ -240,6 +240,33 @@ input {
   background-color: #000;
 }
 
+/* 4 botones de acceso rapido por categoria, Modo Pro (23/09/2026): mismo
+   look que "Producto Manual" pero mas chicos, en grilla, para que quepan
+   los 4 juntos sin ocupar tanto lugar como el boton principal. */
+.piloto-quick-manual-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.piloto-manual-btn--quick {
+  width: 100%;
+  min-height: 52px;
+  padding: 0.6rem 1rem;
+  font-size: 1.05rem;
+  background-color: #ffffff;
+  color: #111;
+  border: 2px solid #111;
+}
+
+.piloto-manual-btn--quick:hover {
+  background-color: #111;
+  color: #fff;
+}
+
 .piloto-empty-state {
   padding: 28px;
   border: 1px dashed #cbd5e1;

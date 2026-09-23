@@ -34,6 +34,11 @@ const ARROW_KEYS = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"]);
 // accidente con toques sueltos).
 const MODE_UNLOCK_CLICK_WINDOW_MS = 1500;
 const MODE_UNLOCK_CLICK_COUNT = 3;
+// 4 botones de acceso rapido, Modo Pro (23/09/2026, pedido explicito):
+// "practicamente igual que Producto Manual... la diferencia principal es
+// el nombre que se asigna al producto". Reusan el mismo modal/logica --
+// ver manualModalLabel, handleManualConfirm.
+const QUICK_MANUAL_LABELS = ["Frutas y verduras", "Congelados", "Empanadas", "Otros"];
 
 export function PilotoHomePage() {
   const [barcodeInput, setBarcodeInput] = useState("");
@@ -42,7 +47,11 @@ export function PilotoHomePage() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [focusSignal, setFocusSignal] = useState(0);
   const [quickAddBarcode, setQuickAddBarcode] = useState<string | null>(null);
-  const [isManualModalOpen, setIsManualModalOpen] = useState(false);
+  // null = cerrado; si no, el texto que va a quedar como nombre del
+  // producto en la venta (23/09/2026, pedido explicito: 4 botones de
+  // categoria en Modo Pro reusan este mismo modal, solo cambia el nombre
+  // -- "Producto Manual" sigue siendo el valor del boton original).
+  const [manualModalLabel, setManualModalLabel] = useState<string | null>(null);
   // Vive aca (no adentro de ScannerCart) para que el efecto de mas abajo
   // se entere de cuando este modal se abre/cierra tambien -- pedido
   // explicito (16/09/2026): "cierro un producto... siempre el cursor
@@ -85,10 +94,10 @@ export function PilotoHomePage() {
   // input del escaner, ya sea que cierro un producto, cobro, o hago
   // cualquier otra cosa".
   useEffect(() => {
-    if (!isCheckoutOpen && !quickAddBarcode && !isManualModalOpen && editingProductId === null) {
+    if (!isCheckoutOpen && !quickAddBarcode && manualModalLabel === null && editingProductId === null) {
       setFocusSignal((signal) => signal + 1);
     }
-  }, [isCheckoutOpen, quickAddBarcode, isManualModalOpen, editingProductId]);
+  }, [isCheckoutOpen, quickAddBarcode, manualModalLabel, editingProductId]);
 
   // Le avisa a AppUpdateNotice si es seguro actualizar solo (pedido
   // explicito, 22/09/2026): "ocupada" = hay algun modal/proceso abierto O
@@ -96,9 +105,9 @@ export function PilotoHomePage() {
   // puede tener una venta pendiente mientras se mira la Caja 1 vacia).
   const hasPendingProducts = registerSummaries.some((register) => register.count > 0);
   useEffect(() => {
-    setAppBusy(hasPendingProducts || isCheckoutOpen || !!quickAddBarcode || isManualModalOpen || editingProductId !== null);
+    setAppBusy(hasPendingProducts || isCheckoutOpen || !!quickAddBarcode || manualModalLabel !== null || editingProductId !== null);
     return () => setAppBusy(false);
-  }, [hasPendingProducts, isCheckoutOpen, quickAddBarcode, isManualModalOpen, editingProductId]);
+  }, [hasPendingProducts, isCheckoutOpen, quickAddBarcode, manualModalLabel, editingProductId]);
 
   // Modo Basico/Pro (23/09/2026, pedido explicito): en Basico solo se ve
   // Caja 1 -- las cajas y la impresora son funcionalidades Pro. Los
@@ -142,17 +151,17 @@ export function PilotoHomePage() {
           target.isContentEditable);
       if (isEditable && !DOMINANT_ARROW_KEYS.has(event.key)) return;
 
-      if (isManualModalOpen || isCheckoutOpen || quickAddBarcode || editingProductId !== null) return;
+      if (manualModalLabel !== null || isCheckoutOpen || quickAddBarcode || editingProductId !== null) return;
 
       // preventDefault: que la flecha no mueva el foco entre botones ni
       // haga scroll de la pagina.
       event.preventDefault();
-      setIsManualModalOpen(true);
+      setManualModalLabel("Producto Manual");
     }
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isManualModalOpen, isCheckoutOpen, quickAddBarcode, editingProductId]);
+  }, [manualModalLabel, isCheckoutOpen, quickAddBarcode, editingProductId]);
 
   function handleEmptyEnter() {
     if (!cartItems.length) return;
@@ -232,8 +241,11 @@ export function PilotoHomePage() {
   }
 
   function handleManualConfirm(price: number) {
-    addManualItem(price);
-    setIsManualModalOpen(false);
+    // manualModalLabel siempre tiene un valor real cuando el modal esta
+    // abierto (nunca se llega aca con el modal cerrado) -- el "??" es solo
+    // para que TypeScript quede tranquilo con el tipo string | null.
+    addManualItem(price, manualModalLabel ?? "Producto Manual");
+    setManualModalLabel(null);
   }
 
   // 3 clics sobre "Piloto" abren el selector de modo, oculto para no
@@ -274,7 +286,7 @@ export function PilotoHomePage() {
     setActiveRegisterId(registerId);
     setIsCheckoutOpen(false);
     setQuickAddBarcode(null);
-    setIsManualModalOpen(false);
+    setManualModalLabel(null);
     setEditingProductId(null);
     // Empuje explicito (22/09/2026, pedido explicito): el efecto de mas
     // arriba solo reenfoca cuando ALGUNO de esos 4 modales cambia de
@@ -377,9 +389,24 @@ export function PilotoHomePage() {
             focusSignal={focusSignal}
           />
 
-          <button type="button" className="piloto-manual-btn" onClick={() => setIsManualModalOpen(true)}>
+          <button type="button" className="piloto-manual-btn" onClick={() => setManualModalLabel("Producto Manual")}>
             Producto Manual
           </button>
+
+          {isPro ? (
+            <div className="piloto-quick-manual-grid">
+              {QUICK_MANUAL_LABELS.map((label) => (
+                <button
+                  key={label}
+                  type="button"
+                  className="piloto-manual-btn piloto-manual-btn--quick"
+                  onClick={() => setManualModalLabel(label)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          ) : null}
 
           {cartItems.length ? (
             <>
@@ -414,8 +441,8 @@ export function PilotoHomePage() {
             />
           ) : null}
 
-          {isManualModalOpen ? (
-            <ManualProductModal onClose={() => setIsManualModalOpen(false)} onConfirm={handleManualConfirm} />
+          {manualModalLabel !== null ? (
+            <ManualProductModal title={manualModalLabel} onClose={() => setManualModalLabel(null)} onConfirm={handleManualConfirm} />
           ) : null}
         </>
       )}
