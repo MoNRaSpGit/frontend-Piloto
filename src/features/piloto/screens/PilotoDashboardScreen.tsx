@@ -25,10 +25,18 @@ function formatTime(isoDate: string) {
   });
 }
 
+// Mostrar solo las primeras 5 y esconder el resto detras de un boton
+// (24/09/2026, pedido explicito: "muy similar al panel de control de el
+// Joker") -- mismo patron que JokerPanelScreen: una constante, un
+// booleano showAll, slice, y un boton "Ver todos"/"Ver menos" al lado
+// del titulo de la seccion, solo si hay algo escondido.
+const MOVEMENTS_PREVIEW_COUNT = 5;
+
 export function PilotoDashboardScreen() {
   const [summary, setSummary] = useState<PilotoSalesSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [showAllMovements, setShowAllMovements] = useState(false);
 
   function loadSummary() {
     setIsLoading(true);
@@ -79,28 +87,49 @@ export function PilotoDashboardScreen() {
         </div>
       </div>
 
-      <h2 className="piloto-dashboard-section-title">Movimientos</h2>
+      {(() => {
+        // La numeracion "Venta #1, #2..." va en orden cronologico (la
+        // que ya trae summary.sales), pero para MOSTRAR se invierte --
+        // la mas reciente primero, igual que en Joker -- asi el recorte
+        // de 5 muestra lo que acaba de pasar, no lo mas viejo del dia.
+        const recentFirst = [...summary.sales].reverse();
+        const hasHiddenMovements = recentFirst.length > MOVEMENTS_PREVIEW_COUNT;
+        const visibleSales = showAllMovements ? recentFirst : recentFirst.slice(0, MOVEMENTS_PREVIEW_COUNT);
 
-      {summary.sales.length ? (
-        <ul className="piloto-dashboard-movements">
-          {summary.sales.map((sale) => (
-            <li key={sale.id} className="piloto-dashboard-movement">
-              <div className="piloto-dashboard-movement__header">
-                <strong>Venta #{sale.displayNumber}</strong>
-                <span className="piloto-dashboard-movement__time">{formatTime(sale.createdAt)}</span>
-                <strong className="piloto-dashboard-movement__total">{formatCurrency(sale.totalAmount)}</strong>
-              </div>
-              <p className="piloto-dashboard-movement__items">
-                {sale.items.map((item) => (item.quantity > 1 ? `${item.quantity}x ${item.name}` : item.name)).join(", ")}
-              </p>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <section className="piloto-empty-state">
-          <p>Todavia no hay ventas hoy.</p>
-        </section>
-      )}
+        return (
+          <>
+            <div className="piloto-dashboard-section-header">
+              <h2 className="piloto-dashboard-section-title">Movimientos</h2>
+              {hasHiddenMovements ? (
+                <button type="button" className="piloto-dashboard-toggle-btn" onClick={() => setShowAllMovements((current) => !current)}>
+                  {showAllMovements ? "Ver menos" : "Ver todos"}
+                </button>
+              ) : null}
+            </div>
+
+            {visibleSales.length ? (
+              <ul className="piloto-dashboard-movements">
+                {visibleSales.map((sale) => (
+                  <li key={sale.id} className="piloto-dashboard-movement">
+                    <div className="piloto-dashboard-movement__header">
+                      <strong>Venta #{sale.displayNumber}</strong>
+                      <span className="piloto-dashboard-movement__time">{formatTime(sale.createdAt)}</span>
+                      <strong className="piloto-dashboard-movement__total">{formatCurrency(sale.totalAmount)}</strong>
+                    </div>
+                    <p className="piloto-dashboard-movement__items">
+                      {sale.items.map((item) => (item.quantity > 1 ? `${item.quantity}x ${item.name}` : item.name)).join(", ")}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <section className="piloto-empty-state">
+                <p>Todavia no hay ventas hoy.</p>
+              </section>
+            )}
+          </>
+        );
+      })()}
     </div>
   );
 }

@@ -224,10 +224,36 @@ input {
   color: #94a3b8;
 }
 
+.piloto-dashboard-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
 .piloto-dashboard-section-title {
   margin: 0;
   font-size: 1.1rem;
   color: #334155;
+}
+
+/* "Ver todos"/"Ver menos" (24/09/2026, pedido explicito: "muy similar
+   al panel de control de el Joker"). */
+.piloto-dashboard-toggle-btn {
+  min-height: 36px;
+  padding: 0 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #475569;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.piloto-dashboard-toggle-btn:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
 }
 
 .piloto-dashboard-movements {
