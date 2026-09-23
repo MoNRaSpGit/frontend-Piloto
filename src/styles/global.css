@@ -49,6 +49,16 @@ input {
   color: #64748b;
 }
 
+/* Es un <button> por dentro (acceso al selector de modo con 3 clics, ver
+   PilotoHomePage.tsx), pero tiene que verse identico al <p> de siempre. */
+.piloto-kicker--button {
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: default;
+  font: inherit;
+}
+
 .piloto-header h1 {
   margin: 0;
   font-size: clamp(1.9rem, 5.5vw, 2.7rem);
@@ -356,6 +366,40 @@ input {
   border: 2px solid #cbd5e1;
   padding: 0 14px;
   font-size: 1.3rem;
+}
+
+/* Selector de modo (23/09/2026): ver PilotoModeModal.tsx. */
+.piloto-mode-options {
+  display: grid;
+  gap: 12px;
+}
+
+.piloto-mode-option {
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  padding: 1rem 1.2rem;
+  border-radius: 12px;
+  border: 2px solid #cbd5e1;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.piloto-mode-option:hover {
+  border-color: #94a3b8;
+}
+
+.piloto-mode-option strong {
+  font-size: 1.15rem;
+}
+
+.piloto-mode-option span {
+  color: #64748b;
+}
+
+.piloto-mode-option.is-active {
+  border-color: #111;
+  background: rgba(17, 17, 17, 0.04);
 }
 
 .piloto-modal-field input:focus {
