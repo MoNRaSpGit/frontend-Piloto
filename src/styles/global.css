@@ -271,10 +271,40 @@ input {
   border: 1px solid #e2e8f0;
 }
 
+/* Clickeable: hacer click en una venta muestra el detalle de productos
+   (24/09/2026, pedido explicito: "uno arriba del otro, con el precio"). */
 .piloto-dashboard-movement__header {
   display: flex;
   align-items: baseline;
   gap: 10px;
+  cursor: pointer;
+}
+
+.piloto-dashboard-movement__chevron {
+  display: inline-flex;
+  color: #94a3b8;
+  transition: transform 0.15s ease;
+}
+
+.piloto-dashboard-movement__chevron.is-open {
+  transform: rotate(90deg);
+}
+
+.piloto-dashboard-movement__detail {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 8px 0 0;
+  border-top: 1px dashed #e2e8f0;
+  display: grid;
+  gap: 6px;
+}
+
+.piloto-dashboard-movement__detail li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  color: #334155;
 }
 
 .piloto-dashboard-movement__time {

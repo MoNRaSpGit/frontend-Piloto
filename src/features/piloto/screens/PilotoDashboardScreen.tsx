@@ -37,6 +37,23 @@ export function PilotoDashboardScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [showAllMovements, setShowAllMovements] = useState(false);
+  // Detalle de una venta (24/09/2026, pedido explicito): "hacerle click a
+  // la venta que muestre en detalle los productos, uno arriba del otro,
+  // con el precio". Cada venta se abre/cierra independiente de las
+  // demas -- un Set en vez de "solo una a la vez".
+  const [expandedSaleIds, setExpandedSaleIds] = useState<Set<number>>(new Set());
+
+  function toggleSaleDetail(saleId: number) {
+    setExpandedSaleIds((current) => {
+      const next = new Set(current);
+      if (next.has(saleId)) {
+        next.delete(saleId);
+      } else {
+        next.add(saleId);
+      }
+      return next;
+    });
+  }
 
   function loadSummary() {
     setIsLoading(true);
@@ -109,18 +126,51 @@ export function PilotoDashboardScreen() {
 
             {visibleSales.length ? (
               <ul className="piloto-dashboard-movements">
-                {visibleSales.map((sale) => (
-                  <li key={sale.id} className="piloto-dashboard-movement">
-                    <div className="piloto-dashboard-movement__header">
-                      <strong>Venta #{sale.displayNumber}</strong>
-                      <span className="piloto-dashboard-movement__time">{formatTime(sale.createdAt)}</span>
-                      <strong className="piloto-dashboard-movement__total">{formatCurrency(sale.totalAmount)}</strong>
-                    </div>
-                    <p className="piloto-dashboard-movement__items">
-                      {sale.items.map((item) => (item.quantity > 1 ? `${item.quantity}x ${item.name}` : item.name)).join(", ")}
-                    </p>
-                  </li>
-                ))}
+                {visibleSales.map((sale) => {
+                  const isExpanded = expandedSaleIds.has(sale.id);
+                  return (
+                    <li key={sale.id} className="piloto-dashboard-movement">
+                      <div
+                        className="piloto-dashboard-movement__header"
+                        role="button"
+                        tabIndex={0}
+                        aria-expanded={isExpanded}
+                        onClick={() => toggleSaleDetail(sale.id)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            toggleSaleDetail(sale.id);
+                          }
+                        }}
+                      >
+                        <span className={isExpanded ? "piloto-dashboard-movement__chevron is-open" : "piloto-dashboard-movement__chevron"}>
+                          ›
+                        </span>
+                        <strong>Venta #{sale.displayNumber}</strong>
+                        <span className="piloto-dashboard-movement__time">{formatTime(sale.createdAt)}</span>
+                        <strong className="piloto-dashboard-movement__total">{formatCurrency(sale.totalAmount)}</strong>
+                      </div>
+
+                      {isExpanded ? (
+                        <ul className="piloto-dashboard-movement__detail">
+                          {sale.items.map((item, index) => (
+                            <li key={index}>
+                              <span>
+                                {item.quantity > 1 ? `${item.quantity}x ` : ""}
+                                {item.name}
+                              </span>
+                              <span>{formatCurrency(item.lineTotal)}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="piloto-dashboard-movement__items">
+                          {sale.items.map((item) => (item.quantity > 1 ? `${item.quantity}x ${item.name}` : item.name)).join(", ")}
+                        </p>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             ) : (
               <section className="piloto-empty-state">
