@@ -4,9 +4,21 @@ import { buildRawTicketLines, type SaleTicket } from "./piloto.ticketFormat";
 
 export type { SaleTicket };
 
-const FALLBACK_PREFERRED_PRINTER = "ImpRamon";
+// El nombre de la impresora se descubre una vez por PC y se recuerda
+// (antes habia un nombre fijo, "ImpRamon", que en otra PC no existe y
+// generaba un cartel de QZ de mas por intentar imprimir en una impresora
+// inexistente).
+const PRINTER_STORAGE_KEY = "piloto.printerName";
 
-let cachedPrinterName = FALLBACK_PREFERRED_PRINTER;
+function readStoredPrinterName() {
+  try {
+    return window.localStorage.getItem(PRINTER_STORAGE_KEY) || "";
+  } catch {
+    return "";
+  }
+}
+
+let cachedPrinterName = readStoredPrinterName();
 
 // Firma cada conexion con el certificado del backend (ver
 // piloto-printing.service.ts#getQzCertificate / signQzRequest, mismo
@@ -65,6 +77,11 @@ export async function printSaleTicketByQz(ticket: SaleTicket) {
     const config = qz.configs.create(printerName, { encoding: "CP437" });
     await qz.print(config, data);
     cachedPrinterName = printerName;
+    try {
+      window.localStorage.setItem(PRINTER_STORAGE_KEY, printerName);
+    } catch {
+      // Sin storage no pasa nada: se vuelve a descubrir la proxima vez.
+    }
     return { printerName };
   };
 
