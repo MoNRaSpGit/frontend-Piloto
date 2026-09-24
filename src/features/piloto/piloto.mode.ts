@@ -20,7 +20,14 @@ const STORAGE_KEY = "piloto.mode";
 // arranca en Basico -- Pro se activa a mano.
 const DEFAULT_MODE: PilotoMode = "basic";
 
+// Pedido explicito (24/09/2026): "saca el modo pro de produccion, no lo
+// borres, solo quitalo de produccion". El codigo Pro sigue intacto; solo
+// se habilita en desarrollo (npm run dev). Para volver a habilitarlo en
+// produccion, poner esto en true.
+const PRO_ENABLED = import.meta.env.DEV;
+
 function readStoredMode(): PilotoMode {
+  if (!PRO_ENABLED) return DEFAULT_MODE;
   if (typeof window === "undefined") return DEFAULT_MODE;
   const stored = window.localStorage.getItem(STORAGE_KEY);
   return stored === "pro" ? "pro" : DEFAULT_MODE;
@@ -30,10 +37,12 @@ export function usePilotoMode() {
   const [mode, setModeState] = useState<PilotoMode>(readStoredMode);
 
   useEffect(() => {
+    if (!PRO_ENABLED) return;
     window.localStorage.setItem(STORAGE_KEY, mode);
   }, [mode]);
 
   function setMode(nextMode: PilotoMode) {
+    if (!PRO_ENABLED) return;
     setModeState(nextMode);
   }
 
