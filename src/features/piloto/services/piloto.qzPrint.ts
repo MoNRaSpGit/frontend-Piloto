@@ -46,7 +46,7 @@ function pickPrinterName(printers: string[] = []) {
     return "";
   }
 
-  const preferred = physical.find((name) => /xprinter|xp-|pos|thermal|receipt/i.test(String(name || "")));
+  const preferred = physical.find((name) => /ramon|xprinter|xp-|pos|thermal|receipt/i.test(String(name || "")));
   return preferred || physical[0];
 }
 
