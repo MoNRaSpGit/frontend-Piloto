@@ -6,7 +6,10 @@ type ScannerCheckoutProps = {
   isOpen: boolean;
   onOpen: () => void;
   onClose: () => void;
-  onCharge: () => Promise<boolean>;
+  onCharge: (shouldPrint: boolean) => Promise<boolean>;
+  // Muestra el boton "Confirmar e imprimir" (Basico). Sin esto, el modal
+  // queda con los 2 botones de siempre.
+  canPrint?: boolean;
 };
 
 function formatCurrency(amount: number) {
@@ -21,7 +24,7 @@ function formatCurrency(amount: number) {
 // que apriete cobrar salga el modal mas grande para confirmar con el
 // precio y listo". Ya no se elige medio de pago -- un solo boton,
 // confirmar y cobrar.
-export function ScannerCheckout({ total, isOpen, onOpen, onClose, onCharge }: ScannerCheckoutProps) {
+export function ScannerCheckout({ total, isOpen, onOpen, onClose, onCharge, canPrint = false }: ScannerCheckoutProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const confirmButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -42,12 +45,12 @@ export function ScannerCheckout({ total, isOpen, onOpen, onClose, onCharge }: Sc
   // instante leen el mismo valor viejo), asi que se usa un ref.
   const isChargingRef = useRef(false);
 
-  async function handleConfirm() {
+  async function handleConfirm(shouldPrint = false) {
     if (isChargingRef.current) return;
     isChargingRef.current = true;
 
     setIsSubmitting(true);
-    const ok = await onCharge();
+    const ok = await onCharge(shouldPrint);
     setIsSubmitting(false);
     isChargingRef.current = false;
 
@@ -78,7 +81,7 @@ export function ScannerCheckout({ total, isOpen, onOpen, onClose, onCharge }: Sc
       if (event.key !== "Enter" || event.repeat) return;
       if ((event.target as HTMLElement | null)?.tagName === "BUTTON") return;
       event.preventDefault();
-      void latestConfirmRef.current();
+      void latestConfirmRef.current(false);
     }
 
     document.addEventListener("keydown", handleKeyDown);
@@ -111,11 +114,21 @@ export function ScannerCheckout({ total, isOpen, onOpen, onClose, onCharge }: Sc
               <button type="button" className="piloto-button piloto-button--danger piloto-button--big" onClick={onClose} disabled={isSubmitting}>
                 Cancelar
               </button>
+              {canPrint ? (
+                <button
+                  type="button"
+                  className="piloto-button piloto-button--ghost piloto-button--big"
+                  onClick={() => void handleConfirm(true)}
+                  disabled={isSubmitting}
+                >
+                  Confirmar e imprimir
+                </button>
+              ) : null}
               <button
                 ref={confirmButtonRef}
                 type="button"
                 className="piloto-button piloto-button--primary piloto-button--big"
-                onClick={handleConfirm}
+                onClick={() => void handleConfirm(false)}
                 disabled={isSubmitting}
               >
                 {isSubmitting ? "Confirmando..." : "Confirmar cobro"}

@@ -339,7 +339,7 @@ export function PilotoHomePage() {
   // y chao, y empiece todo de vuelta". Se sacó el intento de imprimir
   // (printSaleTicket) que tiraba el cartel de "no encontro dispositivo" --
   // por ahora la venta se confirma y listo, sin tocar nada de impresion.
-  async function handleCharge() {
+  async function handleCharge(shouldPrint: boolean) {
     try {
       const ticketItems = cartItems;
       const ticketTotal = total;
@@ -356,7 +356,7 @@ export function PilotoHomePage() {
       // cierre al toque, sin quedar colgado mientras QZ Tray intenta
       // conectar (puede tardar si esta cerrado o no hay impresora). El
       // error, si lo hay, se avisa cuando llegue, aparte.
-      if (isPro) {
+      if (isPro || shouldPrint) {
         void printSaleTicketByQz({
           externalId: `piloto-${Date.now()}`,
           chargedAtIso: new Date().toISOString(),
@@ -453,6 +453,7 @@ export function PilotoHomePage() {
                 onOpen={() => setIsCheckoutOpen(true)}
                 onClose={() => setIsCheckoutOpen(false)}
                 onCharge={handleCharge}
+                canPrint={!isPro}
               />
             </>
           ) : isPro ? null : (
