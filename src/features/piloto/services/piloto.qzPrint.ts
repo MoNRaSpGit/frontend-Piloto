@@ -20,6 +20,26 @@ function readStoredPrinterName() {
 
 let cachedPrinterName = readStoredPrinterName();
 
+export function getSelectedPrinterName() {
+  return cachedPrinterName;
+}
+
+export function selectPrinterName(printerName: string) {
+  cachedPrinterName = printerName;
+  try {
+    window.localStorage.setItem(PRINTER_STORAGE_KEY, printerName);
+  } catch {
+    // Sin storage no pasa nada: se vuelve a elegir la proxima vez.
+  }
+}
+
+// Todas las impresoras que ve QZ Tray en esta PC (para el selector manual).
+export async function listAvailablePrinters(): Promise<string[]> {
+  await ensureQzConnected();
+  const printers = await qz.printers.find();
+  return Array.isArray(printers) ? printers : printers ? [String(printers)] : [];
+}
+
 // Firma cada conexion con el certificado del backend (ver
 // piloto-printing.service.ts#getQzCertificate / signQzRequest, mismo
 // mecanismo y mismo certificado que ya usan Joker y Ejemplo) para que QZ
@@ -76,12 +96,7 @@ export async function printSaleTicketByQz(ticket: SaleTicket) {
   const attemptPrinter = async (printerName: string) => {
     const config = qz.configs.create(printerName, { encoding: "CP437" });
     await qz.print(config, data);
-    cachedPrinterName = printerName;
-    try {
-      window.localStorage.setItem(PRINTER_STORAGE_KEY, printerName);
-    } catch {
-      // Sin storage no pasa nada: se vuelve a descubrir la proxima vez.
-    }
+    selectPrinterName(printerName);
     return { printerName };
   };
 

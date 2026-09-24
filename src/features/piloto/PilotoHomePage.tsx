@@ -12,7 +12,8 @@ import { ScannerInput } from "./components/ScannerInput";
 import { ScannerQuickAddModal } from "./components/ScannerQuickAddModal";
 import { usePilotoCart, type PilotoRegisterId } from "./hooks/usePilotoCart";
 import { usePilotoMode } from "./piloto.mode";
-import { printSaleTicketByQz } from "./services/piloto.qzPrint";
+import { PrinterPickerModal } from "./components/PrinterPickerModal";
+import { getSelectedPrinterName, printSaleTicketByQz } from "./services/piloto.qzPrint";
 import { PilotoDashboardScreen } from "./screens/PilotoDashboardScreen";
 import { PilotoPricesScreen } from "./screens/PilotoPricesScreen";
 import { setAppBusy } from "../../shared/state/appActivity";
@@ -78,6 +79,8 @@ export function PilotoHomePage() {
   // vuelve al input".
   const [editingProductId, setEditingProductId] = useState<number | null>(null);
   const { mode, setMode, isPro } = usePilotoMode();
+  const [isPrinterPickerOpen, setIsPrinterPickerOpen] = useState(false);
+  const [selectedPrinterName, setSelectedPrinterName] = useState(getSelectedPrinterName);
   const [isModeModalOpen, setIsModeModalOpen] = useState(false);
   // "Precios" -- Modo Pro (23/09/2026, pedido explicito): pestana nueva,
   // solo existe en Pro. En Basico no hay nav para elegirla, pero por las
@@ -393,6 +396,17 @@ export function PilotoHomePage() {
           </button>
         </header>
       )}
+
+      {/* Selector manual de impresora (Basico, pedido explicito
+          24/09/2026). En Pro no se muestra: alli imprime siempre. */}
+      {!isPro ? (
+        <button type="button" className="piloto-printer-btn" onClick={() => setIsPrinterPickerOpen(true)}>
+          {selectedPrinterName ? `Impresora: ${selectedPrinterName}` : "Seleccionar impresora"}
+        </button>
+      ) : null}
+      {isPrinterPickerOpen ? (
+        <PrinterPickerModal onClose={() => setIsPrinterPickerOpen(false)} onSelected={setSelectedPrinterName} />
+      ) : null}
 
       {/* Pedido explicito: "por defecto, dejar seleccionada Caja 1" (no
           necesariamente la que este activa en ese momento). */}
