@@ -202,18 +202,7 @@ export function ScannerCart({
 
               return (
                 <tr key={item.productId} className={isLatest ? "is-latest" : ""}>
-                  <td
-                    className="piloto-cart-table__product"
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => onAddOne(item.productId)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        onAddOne(item.productId);
-                      }
-                    }}
-                  >
+                  <td className="piloto-cart-table__product">
                     <ProductThumb name={item.name} imageUrl={item.imageUrl} />
                     <div>
                       <div className="piloto-product-name">{item.name}</div>
