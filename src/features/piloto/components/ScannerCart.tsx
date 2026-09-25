@@ -225,7 +225,29 @@ export function ScannerCart({
                       Editar
                     </button>
                   </td>
-                  <td className="text-end piloto-cart-table__strong">{item.quantity}</td>
+                  <td className="text-end piloto-cart-table__strong">
+                    {/* Pedido explicito (25/09/2026): "- 20 +" con botones
+                        grandes, para sumar/restar sin apuntar al producto. */}
+                    <div className="piloto-qty-stepper">
+                      <button
+                        type="button"
+                        className="piloto-qty-btn"
+                        onClick={() => onRemoveOne(item.productId)}
+                        aria-label={`Quitar una unidad de ${item.name}`}
+                      >
+                        −
+                      </button>
+                      <span className="piloto-qty-value">{item.quantity}</span>
+                      <button
+                        type="button"
+                        className="piloto-qty-btn"
+                        onClick={() => onAddOne(item.productId)}
+                        aria-label={`Sumar una unidad de ${item.name}`}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </td>
                   <td className="text-end piloto-cart-table__strong">{formatCurrency(lineTotal)}</td>
                   <td className="piloto-cart-table__remove-col">
                     <button
