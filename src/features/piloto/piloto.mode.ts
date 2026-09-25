@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 // Modo Basico / Pro (23/09/2026, pedido explicito): "un solo proyecto y
 // una sola base de codigo... la idea es tener una sola aplicacion y
@@ -6,45 +6,31 @@ import { useEffect, useState } from "react";
 // habilitadas". A proposito NO es un sistema de permisos ni un registro
 // de features: cada funcionalidad Pro se controla con un simple
 // `mode === "pro"` en el lugar donde ya vive esa funcionalidad (ver
-// PilotoHomePage.tsx: las cajas y la impresora). Si en el futuro esto
-// crece mucho, ahi se justifica algo mas formal -- por ahora alcanza y
-// sobra con esto.
+// PilotoHomePage.tsx: las cajas y la impresora).
 //
 // Basico = version original de Piloto (escaner, producto manual, venta).
 // Pro = Basico + las funcionalidades nuevas (cajas, impresora, lo que se
 // vaya agregando).
 export type PilotoMode = "basic" | "pro";
 
-const STORAGE_KEY = "piloto.mode";
-// Pedido explicito: un dispositivo nuevo (sin nada guardado todavia)
-// arranca en Basico -- Pro se activa a mano.
-const DEFAULT_MODE: PilotoMode = "basic";
+// Pedido explicito (25/09/2026): el programa SIEMPRE arranca en Basico,
+// cada vez que se cierra y se vuelve a abrir. Pro se activa a mano (3
+// clics en "Piloto") y vive solo mientras la app esta abierta: el modo
+// NO se guarda en ningun lado (ni localStorage ni sessionStorage, que el
+// navegador puede restaurar al reabrir), asi que recargar o reabrir
+// siempre vuelve a Basico.
+const LEGACY_STORAGE_KEY = "piloto.mode";
 
-// Pedido explicito (24/09/2026): "saca el modo pro de produccion, no lo
-// borres, solo quitalo de produccion". El codigo Pro sigue intacto; solo
-// se habilita en desarrollo (npm run dev). Para volver a habilitarlo en
-// produccion, poner esto en true.
-const PRO_ENABLED = import.meta.env.DEV;
-
-function readStoredMode(): PilotoMode {
-  if (!PRO_ENABLED) return DEFAULT_MODE;
-  if (typeof window === "undefined") return DEFAULT_MODE;
-  const stored = window.localStorage.getItem(STORAGE_KEY);
-  return stored === "pro" ? "pro" : DEFAULT_MODE;
+// Borra el valor viejo que guardaba versiones anteriores, para que no
+// quede basura de un dispositivo que se dejo en Pro.
+try {
+  window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+} catch {
+  // Sin acceso a storage no pasa nada: el modo nunca se lee de ahi.
 }
 
 export function usePilotoMode() {
-  const [mode, setModeState] = useState<PilotoMode>(readStoredMode);
-
-  useEffect(() => {
-    if (!PRO_ENABLED) return;
-    window.localStorage.setItem(STORAGE_KEY, mode);
-  }, [mode]);
-
-  function setMode(nextMode: PilotoMode) {
-    if (!PRO_ENABLED) return;
-    setModeState(nextMode);
-  }
+  const [mode, setMode] = useState<PilotoMode>("basic");
 
   return { mode, setMode, isPro: mode === "pro" };
 }

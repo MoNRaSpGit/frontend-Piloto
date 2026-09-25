@@ -77,7 +77,8 @@ export function PilotoHomePage() {
   // explicito (16/09/2026): "cierro un producto... siempre el cursor
   // vuelve al input".
   const [editingProductId, setEditingProductId] = useState<number | null>(null);
-  const { mode, setMode, isPro } = usePilotoMode();  const [isModeModalOpen, setIsModeModalOpen] = useState(false);
+  const { mode, setMode, isPro } = usePilotoMode();
+  const [isModeModalOpen, setIsModeModalOpen] = useState(false);
   // "Precios" -- Modo Pro (23/09/2026, pedido explicito): pestana nueva,
   // solo existe en Pro. En Basico no hay nav para elegirla, pero por las
   // dudas (si se cambia de modo estando parado en Precios) se fuerza a
