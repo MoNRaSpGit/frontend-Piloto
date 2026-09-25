@@ -1057,7 +1057,7 @@ input {
 .piloto-qty-stepper {
   display: inline-flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 10px;
 }
 

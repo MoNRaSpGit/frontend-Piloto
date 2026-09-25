@@ -190,7 +190,7 @@ export function ScannerCart({
             <tr>
               <th>Producto</th>
               <th className="text-center">Editar</th>
-              <th className="text-end">Cant.</th>
+              <th className="text-center">Cant.</th>
               <th className="text-end">Total</th>
               <th className="text-center piloto-cart-table__remove-col">Quitar</th>
             </tr>
@@ -225,7 +225,7 @@ export function ScannerCart({
                       Editar
                     </button>
                   </td>
-                  <td className="text-end piloto-cart-table__strong">
+                  <td className="text-center piloto-cart-table__strong">
                     {/* Pedido explicito (25/09/2026): "- 20 +" con botones
                         grandes, para sumar/restar sin apuntar al producto. */}
                     <div className="piloto-qty-stepper">
