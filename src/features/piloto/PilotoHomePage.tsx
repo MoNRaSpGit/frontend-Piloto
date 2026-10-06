@@ -423,9 +423,9 @@ export function PilotoHomePage() {
       }
       clearCart();
       setFiarClients(null);
-      toast.success("Venta fiada.");
+      toast.success("Venta a credito registrada.");
     } catch (chargeError) {
-      toast.error(chargeError instanceof Error ? chargeError.message : "No se pudo fiar la venta.");
+      toast.error(chargeError instanceof Error ? chargeError.message : "No se pudo registrar la venta a credito.");
     } finally {
       setIsFiarSubmitting(false);
     }

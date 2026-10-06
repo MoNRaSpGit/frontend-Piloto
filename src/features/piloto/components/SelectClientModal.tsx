@@ -33,16 +33,16 @@ export function SelectClientModal({ clients, total, isSubmitting, onClose, onCon
   }
 
   return (
-    <div className="piloto-modal-overlay" role="dialog" aria-modal="true" aria-label="Fiar venta">
+    <div className="piloto-modal-overlay" role="dialog" aria-modal="true" aria-label="Venta a credito">
       <div className="piloto-modal-card">
         <div className="piloto-modal-card__header">
-          <h2>Fiar venta</h2>
+          <h2>Venta a credito</h2>
           <button type="button" className="piloto-modal-close" onClick={onClose} disabled={isSubmitting}>
             Cerrar
           </button>
         </div>
 
-        <p className="piloto-modal-card__total-label">Total a fiar</p>
+        <p className="piloto-modal-card__total-label">Total a credito</p>
         <p className="piloto-modal-card__total">{formatCurrency(total)}</p>
 
         {clients.length === 0 ? (
@@ -73,7 +73,7 @@ export function SelectClientModal({ clients, total, isSubmitting, onClose, onCon
             onClick={handleConfirm}
             disabled={isSubmitting || !clientId}
           >
-            {isSubmitting ? "Fiando..." : "Confirmar"}
+            {isSubmitting ? "Guardando..." : "Confirmar"}
           </button>
         </div>
       </div>

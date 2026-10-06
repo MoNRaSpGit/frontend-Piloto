@@ -105,7 +105,7 @@ export function ScannerCheckout({ total, isOpen, onOpen, onClose, onCharge, canP
             Cobrar
           </button>
           <button type="button" className="piloto-fiar-btn" onClick={onFiar}>
-            Fiar
+            Crédito
           </button>
         </div>
       </div>
