@@ -1,6 +1,8 @@
 import { API_BASE_URL } from "../../shared/config/api";
 import type {
   CartItem,
+  PilotoAccountEntry,
+  PilotoClient,
   PilotoPaymentMethod,
   PilotoPriceCategory,
   PilotoPriceEntry,
@@ -161,4 +163,53 @@ export async function getSalesSummary(date?: string): Promise<PilotoSalesSummary
   const query = date ? `?date=${encodeURIComponent(date)}` : "";
   const response = await fetch(`${API_BASE_URL}/piloto/sales/summary${query}`, { cache: "no-store" });
   return readJson<PilotoSalesSummary>(response);
+}
+
+// Clientes / cuenta corriente (06/10/2026): "Fiar" en vez de "Cobrar" --
+// version simple, sin pagos parciales.
+type ClientListResponse = PilotoClient[];
+type AccountEntryListResponse = PilotoAccountEntry[];
+
+export async function listClients(): Promise<PilotoClient[]> {
+  const response = await fetch(`${API_BASE_URL}/piloto/clients`, { cache: "no-store" });
+  return readJson<ClientListResponse>(response);
+}
+
+export async function createClient(name: string, phone?: string, address?: string): Promise<PilotoClient> {
+  const response = await fetch(`${API_BASE_URL}/piloto/clients`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, phone, address })
+  });
+  return readJson<PilotoClient>(response);
+}
+
+export async function deleteClient(clientId: number): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/piloto/clients/${clientId}`, { method: "DELETE" });
+  await readJson<{ ok: true }>(response);
+}
+
+export async function listAccountEntries(clientId?: number): Promise<PilotoAccountEntry[]> {
+  const query = clientId ? `?clientId=${clientId}` : "";
+  const response = await fetch(`${API_BASE_URL}/piloto/account-entries${query}`, { cache: "no-store" });
+  return readJson<AccountEntryListResponse>(response);
+}
+
+export async function createAccountEntry(
+  clientId: number,
+  total: number,
+  items: { productName: string; quantity: number; unitPrice: number }[],
+  saleId?: number
+): Promise<PilotoAccountEntry> {
+  const response = await fetch(`${API_BASE_URL}/piloto/account-entries`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ clientId, total, items, saleId })
+  });
+  return readJson<PilotoAccountEntry>(response);
+}
+
+export async function settleAccount(clientId: number): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/piloto/account-entries/client/${clientId}`, { method: "DELETE" });
+  await readJson<{ ok: true }>(response);
 }

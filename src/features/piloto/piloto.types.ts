@@ -71,3 +71,29 @@ export type PilotoSalesSummary = {
   profitMarginRatio: number;
   sales: PilotoSaleMovement[];
 };
+
+// Clientes / cuenta corriente (06/10/2026): venta a credito ligada a un
+// cliente. El saldo es siempre la suma de sus boletas (account entries)
+// abiertas -- no hay un numero de saldo guardado aparte.
+export type PilotoClient = {
+  id: number;
+  name: string;
+  phone: string | null;
+  address: string | null;
+  createdAt: string;
+};
+
+export type PilotoAccountEntryItem = {
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+};
+
+export type PilotoAccountEntry = {
+  id: number;
+  clientId: number;
+  saleId: number | null;
+  total: number;
+  items: PilotoAccountEntryItem[];
+  createdAt: string;
+};

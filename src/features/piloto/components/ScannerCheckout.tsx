@@ -10,6 +10,10 @@ type ScannerCheckoutProps = {
   // Muestra el boton "Confirmar e imprimir" (Basico). Sin esto, el modal
   // queda con los 2 botones de siempre.
   canPrint?: boolean;
+  // "Fiar" (06/10/2026, pedido explicito): boton aparte de "Cobrar", para
+  // no reintroducir el selector de metodo de pago que se sacó el
+  // 16/09/2026. Abre el selector de cliente en vez de cobrar.
+  onFiar: () => void;
 };
 
 function formatCurrency(amount: number) {
@@ -24,7 +28,7 @@ function formatCurrency(amount: number) {
 // que apriete cobrar salga el modal mas grande para confirmar con el
 // precio y listo". Ya no se elige medio de pago -- un solo boton,
 // confirmar y cobrar.
-export function ScannerCheckout({ total, isOpen, onOpen, onClose, onCharge, canPrint = false }: ScannerCheckoutProps) {
+export function ScannerCheckout({ total, isOpen, onOpen, onClose, onCharge, canPrint = false, onFiar }: ScannerCheckoutProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const confirmButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -96,9 +100,14 @@ export function ScannerCheckout({ total, isOpen, onOpen, onClose, onCharge, canP
           <strong>{formatCurrency(total)}</strong>
         </div>
 
-        <button type="button" className="piloto-charge-btn" onClick={onOpen}>
-          Cobrar
-        </button>
+        <div className="piloto-checkout__buttons-row">
+          <button type="button" className="piloto-charge-btn" onClick={onOpen}>
+            Cobrar
+          </button>
+          <button type="button" className="piloto-fiar-btn" onClick={onFiar}>
+            Fiar
+          </button>
+        </div>
       </div>
 
       {isOpen ? (

@@ -894,6 +894,185 @@ input {
   background-color: #000;
 }
 
+.piloto-checkout__buttons-row {
+  display: flex;
+  gap: 10px;
+}
+
+.piloto-checkout__buttons-row .piloto-charge-btn {
+  flex: 2;
+}
+
+.piloto-fiar-btn {
+  flex: 1;
+  min-height: 76px;
+  padding: 0.85rem 1rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #111;
+  background-color: #fff;
+  border: 2px solid #111;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.piloto-fiar-btn:hover {
+  background-color: #f1f1f1;
+}
+
+/* Clientes / cuenta corriente (06/10/2026) */
+.piloto-clientes {
+  padding: 4px 0 20px;
+}
+
+.piloto-clientes-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.piloto-clientes-back {
+  border: none;
+  background: none;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #111;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 10px;
+}
+
+.piloto-clientes-search {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid #dbe4ee;
+  border-radius: 10px;
+  font-size: 1rem;
+  margin-bottom: 14px;
+}
+
+.piloto-clientes-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.piloto-clientes-row {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid #dbe4ee;
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+}
+
+.piloto-clientes-row__name {
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.piloto-clientes-row__debt {
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.piloto-clientes-row__debt--owes {
+  color: #b23a3a;
+  font-weight: 700;
+}
+
+.piloto-clientes-detail-header h2 {
+  margin: 0 0 2px;
+}
+
+.piloto-clientes-meta {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.piloto-clientes-saldo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f4f6f8;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin: 14px 0;
+}
+
+.piloto-clientes-saldo span {
+  font-weight: 700;
+  color: #6b7280;
+}
+
+.piloto-clientes-saldo strong {
+  font-size: 1.6rem;
+}
+
+.piloto-clientes-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.piloto-clientes-confirm-text {
+  font-weight: 600;
+}
+
+.piloto-clientes-section-title {
+  margin: 18px 0 10px;
+}
+
+.piloto-clientes-entries {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.piloto-clientes-entry {
+  border: 1px solid #dbe4ee;
+  border-radius: 10px;
+  padding: 10px 14px;
+  background: #fff;
+}
+
+.piloto-clientes-entry__header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.piloto-clientes-entry__items {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.piloto-clientes-danger-zone {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 24px;
+  padding-top: 14px;
+  border-top: 1px solid #e5e7eb;
+}
+
 .piloto-modal-overlay {
   position: fixed;
   inset: 0;

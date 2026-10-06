@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "react-toastify";
-import { createProduct, createSale, findProductByBarcode, normalizeBarcode, updateProduct } from "./piloto.api";
+import { createAccountEntry, createProduct, createSale, findProductByBarcode, listClients, normalizeBarcode, updateProduct } from "./piloto.api";
 import { CategoryIcon, WeightIcon } from "./components/CategoryIcon";
 import { ManualProductModal } from "./components/ManualProductModal";
 import { PilotoModeModal } from "./components/PilotoModeModal";
@@ -10,9 +10,12 @@ import { ScannerCart } from "./components/ScannerCart";
 import { ScannerCheckout } from "./components/ScannerCheckout";
 import { ScannerInput } from "./components/ScannerInput";
 import { ScannerQuickAddModal } from "./components/ScannerQuickAddModal";
+import { SelectClientModal } from "./components/SelectClientModal";
 import { usePilotoCart, type PilotoRegisterId } from "./hooks/usePilotoCart";
 import { usePilotoMode } from "./piloto.mode";
+import type { PilotoClient } from "./piloto.types";
 import { printSaleTicketByQz } from "./services/piloto.qzPrint";
+import { ClientesScreen } from "./screens/ClientesScreen";
 import { PilotoDashboardScreen } from "./screens/PilotoDashboardScreen";
 import { PilotoPricesScreen } from "./screens/PilotoPricesScreen";
 import { setAppBusy } from "../../shared/state/appActivity";
@@ -84,6 +87,11 @@ export function PilotoHomePage() {
   // dudas (si se cambia de modo estando parado en Precios) se fuerza a
   // volver a "productos" -- ver el efecto mas abajo.
   const [activeTopTab, setActiveTopTab] = useState<PilotoTopTab>("productos");
+  // Clientes / "Fiar" (06/10/2026, pedido explicito): siempre visibles,
+  // no detras de isPro -- ver ClientesScreen.
+  const [isClientesOpen, setIsClientesOpen] = useState(false);
+  const [fiarClients, setFiarClients] = useState<PilotoClient[] | null>(null);
+  const [isFiarSubmitting, setIsFiarSubmitting] = useState(false);
   const titleClickCountRef = useRef(0);
   const titleClickTimeoutRef = useRef<number | null>(null);
 
@@ -375,6 +383,56 @@ export function PilotoHomePage() {
     }
   }
 
+  // "Fiar" (06/10/2026, pedido explicito): boton aparte de "Cobrar". La
+  // venta queda igual que cualquier otra (paymentMethod "credito", ya
+  // soportado desde antes), y aparte se carga una boleta a la cuenta del
+  // cliente elegido -- dos pedidos HTTP seguidos, igual que en Joker: si
+  // el segundo fallara, la venta ya quedo confirmada (se avisa aparte).
+  async function handleOpenFiar() {
+    try {
+      const clients = await listClients();
+      setFiarClients(clients);
+    } catch (fiarError) {
+      toast.error(fiarError instanceof Error ? fiarError.message : "No se pudieron cargar los clientes.");
+    }
+  }
+
+  async function handleConfirmFiar(clientId: number) {
+    setIsFiarSubmitting(true);
+    try {
+      const itemsForEntry = cartItems.map((item) => ({ productName: item.name, quantity: item.quantity, unitPrice: item.price }));
+      const saleTotal = total;
+      const { item: sale } = await createSale(cartItems, "credito");
+      try {
+        await createAccountEntry(clientId, saleTotal, itemsForEntry, sale.id);
+      } catch (entryError) {
+        toast.error(
+          entryError instanceof Error
+            ? `La venta se guardo pero no se cargo en la cuenta del cliente: ${entryError.message}`
+            : "La venta se guardo pero no se cargo en la cuenta del cliente."
+        );
+        clearCart();
+        setFiarClients(null);
+        return;
+      }
+      clearCart();
+      setFiarClients(null);
+      toast.success("Venta fiada.");
+    } catch (chargeError) {
+      toast.error(chargeError instanceof Error ? chargeError.message : "No se pudo fiar la venta.");
+    } finally {
+      setIsFiarSubmitting(false);
+    }
+  }
+
+  if (isClientesOpen) {
+    return (
+      <main className="piloto-shell">
+        <ClientesScreen onClose={() => setIsClientesOpen(false)} />
+      </main>
+    );
+  }
+
   return (
     <main className="piloto-shell">
       {isPro ? (
@@ -437,6 +495,10 @@ export function PilotoHomePage() {
             Producto Manual
           </button>
 
+          <button type="button" className="piloto-manual-btn" onClick={() => setIsClientesOpen(true)}>
+            Clientes
+          </button>
+
           {cartItems.length ? (
             <>
               <ScannerCart
@@ -455,6 +517,7 @@ export function PilotoHomePage() {
                 onClose={() => setIsCheckoutOpen(false)}
                 onCharge={handleCharge}
                 canPrint={!isPro}
+                onFiar={() => void handleOpenFiar()}
               />
             </>
           ) : isPro ? null : (
@@ -475,6 +538,16 @@ export function PilotoHomePage() {
 
           {manualModalLabel !== null ? (
             <ManualProductModal title={manualModalLabel} onClose={() => setManualModalLabel(null)} onConfirm={handleManualConfirm} />
+          ) : null}
+
+          {fiarClients !== null ? (
+            <SelectClientModal
+              clients={fiarClients}
+              total={total}
+              isSubmitting={isFiarSubmitting}
+              onClose={() => setFiarClients(null)}
+              onConfirm={handleConfirmFiar}
+            />
           ) : null}
         </>
       )}
