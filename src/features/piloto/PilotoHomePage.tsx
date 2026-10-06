@@ -432,7 +432,7 @@ export function PilotoHomePage() {
   }
 
   return (
-    <main className="piloto-shell">
+    <main className={activeTopTab === "clientes" ? "piloto-shell piloto-shell--wide" : "piloto-shell"}>
       {isPro ? (
         // Cabecera trabajada (24/09/2026, pedido explicito de mejora
         // visual): logo + "Productos"/"Precios" integrados. Reemplaza al

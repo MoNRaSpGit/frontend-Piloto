@@ -963,68 +963,96 @@ input {
   background-color: #f1f1f1;
 }
 
-/* Clientes / cuenta corriente (06/10/2026) */
+/* Clientes / cuenta corriente (06/10/2026, re-trabajado: "esto no es
+   para celular, usa toda la pantalla... dale un poco mas de trabajo a
+   las deudas, un color... muy similar a lo de Joker"). Pantalla de PC:
+   se usa .piloto-shell--wide (ver PilotoHomePage.tsx) para que el shell
+   no quede limitado a los 1080px pensados para el escaner en celular. */
+.piloto-shell--wide {
+  width: min(1680px, 98vw);
+}
+
 .piloto-clientes {
   padding: 4px 0 20px;
 }
 
-/* 3 columnas (06/10/2026, pedido explicito: "hacerlo con tres columnas,
-   como habiamos hecho en el Joker" -- izquierda ingresar, medio listado,
-   derecha detalle). Apiladas en mobile, 3 columnas lado a lado desde un
-   ancho razonable de tablet/PC en adelante. */
+/* 3 columnas lado a lado (pedido explicito: "como habiamos hecho en el
+   Joker"). Se apilan solo en pantallas chicas -- esta pantalla es de PC,
+   asi que el breakpoint es bajo (700px) nomas por las dudas. */
 .piloto-clientes-columns {
   display: grid;
-  gap: 18px;
+  gap: 24px;
   grid-template-columns: 1fr;
 }
 
-@media (min-width: 900px) {
+@media (min-width: 700px) {
   .piloto-clientes-columns {
-    grid-template-columns: minmax(220px, 280px) minmax(240px, 320px) 1fr;
+    grid-template-columns: minmax(300px, 340px) minmax(340px, 420px) minmax(420px, 1fr);
     align-items: start;
   }
 }
 
 .piloto-clientes-col {
+  min-width: 0;
   border: 1px solid #dbe4ee;
-  border-radius: 14px;
+  border-radius: 16px;
   background: #fff;
-  padding: 16px;
+  padding: 24px;
 }
 
 .piloto-clientes-col-title {
-  margin: 0 0 12px;
-  font-size: 1.1rem;
+  margin: 0 0 16px;
+  font-size: 1.3rem;
 }
 
 .piloto-clientes-form {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+}
+
+/* Los campos venian de .piloto-modal-field, pensados para un modal chico
+   -- sin un ancho explicito el input podia quedar mas angosto o mas
+   ancho que la tarjeta segun el navegador ("el input sale de la caja de
+   nuevo cliente"). Width 100% + min-width:0 lo deja siempre del ancho
+   exacto de la columna. */
+.piloto-clientes-form .piloto-modal-field {
+  width: 100%;
+  min-width: 0;
+}
+
+.piloto-clientes-form .piloto-modal-field input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .piloto-clientes-detail-header h3 {
   margin: 0 0 2px;
+  font-size: 1.4rem;
 }
 
 .piloto-clientes-back {
   border: none;
   background: none;
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: #111;
   cursor: pointer;
   padding: 0;
-  margin-bottom: 10px;
+  margin-bottom: 16px;
 }
 
 .piloto-clientes-search {
   width: 100%;
-  min-height: 48px;
-  padding: 0 14px;
+  min-width: 0;
+  box-sizing: border-box;
+  min-height: 52px;
+  padding: 0 16px;
   border: 1px solid #dbe4ee;
   border-radius: 10px;
-  font-size: 1rem;
-  margin-bottom: 14px;
+  font-size: 1.05rem;
+  margin-bottom: 16px;
 }
 
 .piloto-clientes-list {
@@ -1033,7 +1061,7 @@ input {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .piloto-clientes-row {
@@ -1041,8 +1069,8 @@ input {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 10px;
-  padding: 14px 16px;
+  gap: 12px;
+  padding: 16px 18px;
   border: 1px solid #dbe4ee;
   border-radius: 12px;
   background: #fff;
@@ -1052,17 +1080,26 @@ input {
 
 .piloto-clientes-row__name {
   font-weight: 700;
-  font-size: 1.05rem;
+  font-size: 1.1rem;
 }
 
+/* "Dale un poco mas de trabajo a las deudas, un color" -- pastilla roja
+   suave cuando debe (mismo espiritu que el .joker-cc-hero__debt de
+   Joker, pero como badge en la lista en vez de solo texto). Sin deuda,
+   pastilla verde discreta -- asi se nota a simple vista quien debe sin
+   tener que leer el numero. */
 .piloto-clientes-row__debt {
-  font-size: 0.9rem;
-  color: #6b7280;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 999px;
+  color: #166534;
+  background: #dcfce7;
 }
 
 .piloto-clientes-row__debt--owes {
-  color: #b23a3a;
-  font-weight: 700;
+  color: #991b1b;
+  background: #fee2e2;
 }
 
 .piloto-clientes-row.is-active {
@@ -1077,33 +1114,55 @@ input {
 .piloto-clientes-meta {
   margin: 0;
   color: #6b7280;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
 }
 
+/* Hero del saldo (visualmente parecido al de Joker: tarjeta oscura con
+   el numero grande en rojo cuando hay deuda). */
 .piloto-clientes-saldo {
   display: flex;
   justify-content: space-between;
   align-items: center;
   background: #f4f6f8;
-  border-radius: 12px;
-  padding: 14px 16px;
-  margin: 14px 0;
+  border-radius: 14px;
+  padding: 18px 22px;
+  margin: 18px 0;
 }
 
 .piloto-clientes-saldo span {
   font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: #6b7280;
 }
 
 .piloto-clientes-saldo strong {
-  font-size: 1.6rem;
+  font-size: 1.8rem;
+}
+
+.piloto-clientes-saldo--owes {
+  background: linear-gradient(135deg, #1a1a1a 0%, #3a0d10 100%);
+}
+
+.piloto-clientes-saldo--owes span {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.piloto-clientes-saldo--owes strong {
+  color: #ff9c9c;
 }
 
 .piloto-clientes-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 18px;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.piloto-clientes-actions .piloto-button {
+  flex: none;
+  min-width: 170px;
 }
 
 .piloto-clientes-confirm-text {
@@ -1111,7 +1170,8 @@ input {
 }
 
 .piloto-clientes-section-title {
-  margin: 18px 0 10px;
+  margin: 20px 0 12px;
+  font-size: 1.1rem;
 }
 
 .piloto-clientes-entries {
@@ -1120,28 +1180,29 @@ input {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .piloto-clientes-entry {
   border: 1px solid #dbe4ee;
   border-radius: 10px;
-  padding: 10px 14px;
+  padding: 14px 16px;
   background: #fff;
 }
 
 .piloto-clientes-entry__header {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  font-size: 1.05rem;
 }
 
 .piloto-clientes-entry__items {
   list-style: none;
-  margin: 0 0 8px;
+  margin: 0;
   padding: 0;
   color: #6b7280;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   display: flex;
   flex-direction: column;
   gap: 2px;

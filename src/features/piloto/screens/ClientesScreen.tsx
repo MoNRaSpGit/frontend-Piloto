@@ -42,7 +42,7 @@ export function ClientesScreen({ onClose }: { onClose: () => void }) {
 
   const [isConfirmingSettle, setIsConfirmingSettle] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
-  const [printingEntryId, setPrintingEntryId] = useState<number | null>(null);
+  const [isPrinting, setIsPrinting] = useState(false);
 
   function reload() {
     Promise.all([listClients(), listAccountEntries()])
@@ -123,33 +123,37 @@ export function ClientesScreen({ onClose }: { onClose: () => void }) {
     }
   }
 
-  // "Reimprimir boleta" (06/10/2026, pedido explicito): manda la misma
-  // boleta de vuelta a la impresora termica, igual que una venta comun --
-  // reusa printSaleTicketByQz, solo que con los items de ESA boleta
-  // puntual (no todo lo que debe el cliente).
-  async function handlePrintEntry(entry: PilotoAccountEntry, clientName: string) {
-    setPrintingEntryId(entry.id);
+  // "Imprimir" (06/10/2026, pedido explicito: "no sea reimprimir sino
+  // imprimir, un boton aparte, al lado del saldar cuenta -- va a ser una
+  // sola factura larga, no una por boleta"). Junta TODAS las boletas
+  // abiertas del cliente en un solo ticket, items uno abajo del otro.
+  async function handlePrintAccount() {
+    if (!selectedClient || selectedEntries.length === 0) return;
+
+    setIsPrinting(true);
     try {
-      const items: CartItem[] = entry.items.map((item) => ({
-        productId: 0,
-        name: item.productName,
-        price: item.unitPrice,
-        quantity: item.quantity,
-        imageUrl: null
-      }));
+      const items: CartItem[] = selectedEntries.flatMap((entry) =>
+        entry.items.map((item) => ({
+          productId: 0,
+          name: item.productName,
+          price: item.unitPrice,
+          quantity: item.quantity,
+          imageUrl: null
+        }))
+      );
       await printSaleTicketByQz({
-        externalId: `piloto-boleta-${entry.id}`,
-        chargedAtIso: entry.createdAt,
+        externalId: `piloto-cuenta-${selectedClient.id}`,
+        chargedAtIso: new Date().toISOString(),
         paymentMethod: "credito",
         items,
-        total: entry.total,
-        storeName: `Fiado: ${clientName}`
+        total: selectedSaldo,
+        storeName: `Fiado: ${selectedClient.name}`
       });
-      toast.success("Boleta reimpresa.");
+      toast.success("Cuenta impresa.");
     } catch (printError) {
-      toast.error(printError instanceof Error ? `No se pudo imprimir: ${printError.message}` : "No se pudo imprimir la boleta.");
+      toast.error(printError instanceof Error ? `No se pudo imprimir: ${printError.message}` : "No se pudo imprimir la cuenta.");
     } finally {
-      setPrintingEntryId(null);
+      setIsPrinting(false);
     }
   }
 
@@ -241,7 +245,7 @@ export function ClientesScreen({ onClose }: { onClose: () => void }) {
                 {selectedClient.address ? <p className="piloto-clientes-meta">{selectedClient.address}</p> : null}
               </div>
 
-              <div className="piloto-clientes-saldo">
+              <div className={selectedSaldo > 0 ? "piloto-clientes-saldo piloto-clientes-saldo--owes" : "piloto-clientes-saldo"}>
                 <span>Debe</span>
                 <strong>{formatCurrency(selectedSaldo)}</strong>
               </div>
@@ -258,14 +262,24 @@ export function ClientesScreen({ onClose }: { onClose: () => void }) {
                     </button>
                   </>
                 ) : (
-                  <button
-                    type="button"
-                    className="piloto-button piloto-button--primary"
-                    onClick={() => setIsConfirmingSettle(true)}
-                    disabled={selectedSaldo <= 0}
-                  >
-                    Saldar cuenta
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      className="piloto-button piloto-button--primary"
+                      onClick={() => setIsConfirmingSettle(true)}
+                      disabled={selectedSaldo <= 0}
+                    >
+                      Saldar cuenta
+                    </button>
+                    <button
+                      type="button"
+                      className="piloto-button piloto-button--ghost"
+                      onClick={() => void handlePrintAccount()}
+                      disabled={selectedEntries.length === 0 || isPrinting}
+                    >
+                      {isPrinting ? "Imprimiendo..." : "Imprimir"}
+                    </button>
+                  </>
                 )}
               </div>
 
@@ -290,14 +304,6 @@ export function ClientesScreen({ onClose }: { onClose: () => void }) {
                           </li>
                         ))}
                       </ul>
-                      <button
-                        type="button"
-                        className="piloto-button piloto-button--ghost"
-                        onClick={() => void handlePrintEntry(entry, selectedClient.name)}
-                        disabled={printingEntryId === entry.id}
-                      >
-                        {printingEntryId === entry.id ? "Imprimiendo..." : "Reimprimir boleta"}
-                      </button>
                     </li>
                   ))}
                 </ul>
