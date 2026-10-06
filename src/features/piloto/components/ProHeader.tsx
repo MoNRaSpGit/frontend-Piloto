@@ -1,4 +1,4 @@
-type ProTopTab = "productos" | "precios" | "panel";
+type ProTopTab = "productos" | "precios" | "panel" | "clientes";
 
 type ProHeaderProps = {
   activeTopTab: ProTopTab;
@@ -53,6 +53,15 @@ export function ProHeader({ activeTopTab, onSelectTab, onTitleClick }: ProHeader
           onClick={() => onSelectTab("panel")}
         >
           Panel
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTopTab === "clientes"}
+          className={activeTopTab === "clientes" ? "piloto-pro-nav-tab is-active" : "piloto-pro-nav-tab"}
+          onClick={() => onSelectTab("clientes")}
+        >
+          Clientes
         </button>
       </nav>
     </header>

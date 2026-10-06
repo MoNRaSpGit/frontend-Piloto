@@ -20,7 +20,7 @@ import { PilotoDashboardScreen } from "./screens/PilotoDashboardScreen";
 import { PilotoPricesScreen } from "./screens/PilotoPricesScreen";
 import { setAppBusy } from "../../shared/state/appActivity";
 
-type PilotoTopTab = "productos" | "precios" | "panel";
+type PilotoTopTab = "productos" | "precios" | "panel" | "clientes";
 
 const NOT_FOUND_MESSAGE = "Producto no encontrado.";
 // Ya no se elige medio de pago en la UI (pedido explicito, 16/09/2026:
@@ -87,9 +87,10 @@ export function PilotoHomePage() {
   // dudas (si se cambia de modo estando parado en Precios) se fuerza a
   // volver a "productos" -- ver el efecto mas abajo.
   const [activeTopTab, setActiveTopTab] = useState<PilotoTopTab>("productos");
-  // Clientes / "Fiar" (06/10/2026, pedido explicito): siempre visibles,
-  // no detras de isPro -- ver ClientesScreen.
-  const [isClientesOpen, setIsClientesOpen] = useState(false);
+  // "Clientes" / "Fiar" (06/10/2026, pedido explicito): pestana propia en
+  // la barra de navegacion (arriba a la derecha), siempre visible -- no
+  // detras de isPro. Es un valor mas de activeTopTab, no un estado
+  // aparte: asi conviven bien con las pestanas de Precios/Panel del Pro.
   const [fiarClients, setFiarClients] = useState<PilotoClient[] | null>(null);
   const [isFiarSubmitting, setIsFiarSubmitting] = useState(false);
   const titleClickCountRef = useRef(0);
@@ -425,37 +426,55 @@ export function PilotoHomePage() {
     }
   }
 
-  if (isClientesOpen) {
-    return (
-      <main className="piloto-shell">
-        <ClientesScreen onClose={() => setIsClientesOpen(false)} />
-      </main>
-    );
-  }
-
   return (
     <main className="piloto-shell">
       {isPro ? (
         // Cabecera trabajada (24/09/2026, pedido explicito de mejora
         // visual): logo + "Productos"/"Precios" integrados. Reemplaza al
         // <header> simple de abajo Y a la barra de pestanas que antes iba
-        // separada -- ver ProHeader.tsx.
+        // separada -- ver ProHeader.tsx. "Clientes" se agrego como pestana
+        // mas (06/10/2026), no como boton aparte.
         <ProHeader activeTopTab={activeTopTab} onSelectTab={setActiveTopTab} onTitleClick={handleTitleClick} />
       ) : (
-        <header className="piloto-header">
-          {/* Selector de modo oculto: 3 clics para abrirlo (ver
-              handleTitleClick). No tiene pinta de boton a proposito, para
-              que el usuario normal no note que hace algo. */}
+        // Barra de navegacion simple en Basico (06/10/2026, pedido
+        // explicito: "una pestana productos y una clientes... arriba a la
+        // derecha, como un encabezado"). Mismo mecanismo de activeTopTab
+        // que ya usaba el Pro para Precios/Panel, solo que aca son 2
+        // pestanas nomas y siempre visibles (no dependen de isPro).
+        <header className="piloto-header piloto-header--with-nav">
           <button type="button" className="piloto-kicker piloto-kicker--button" onClick={handleTitleClick}>
             Piloto
           </button>
+
+          <nav className="piloto-header-nav" role="tablist" aria-label="Secciones">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTopTab !== "clientes"}
+              className={activeTopTab !== "clientes" ? "piloto-header-nav-tab is-active" : "piloto-header-nav-tab"}
+              onClick={() => setActiveTopTab("productos")}
+            >
+              Productos
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTopTab === "clientes"}
+              className={activeTopTab === "clientes" ? "piloto-header-nav-tab is-active" : "piloto-header-nav-tab"}
+              onClick={() => setActiveTopTab("clientes")}
+            >
+              Clientes
+            </button>
+          </nav>
         </header>
       )}
 
 
       {/* Pedido explicito: "por defecto, dejar seleccionada Caja 1" (no
           necesariamente la que este activa en ese momento). */}
-      {activeTopTab === "precios" && isPro ? (
+      {activeTopTab === "clientes" ? (
+        <ClientesScreen onClose={() => setActiveTopTab("productos")} />
+      ) : activeTopTab === "precios" && isPro ? (
         <PilotoPricesScreen registers={registerSummaries} defaultRegisterId={registerSummaries[0]?.id ?? 1} onAddToRegister={addManualItemToRegister} />
       ) : activeTopTab === "panel" && isPro ? (
         <PilotoDashboardScreen />
@@ -493,10 +512,6 @@ export function PilotoHomePage() {
 
           <button type="button" className="piloto-manual-btn" onClick={() => setManualModalLabel("Producto Manual")}>
             Producto Manual
-          </button>
-
-          <button type="button" className="piloto-manual-btn" onClick={() => setIsClientesOpen(true)}>
-            Clientes
           </button>
 
           {cartItems.length ? (

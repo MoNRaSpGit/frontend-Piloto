@@ -40,6 +40,43 @@ input {
   gap: 4px;
 }
 
+/* Barra de navegacion del Basico (06/10/2026, pedido explicito): "una
+   pestana productos y una clientes... arriba a la derecha, como un
+   encabezado". Mismo look & feel que la barra del Pro (piloto-pro-nav*)
+   pero con sus propias clases: esta SI es visible siempre, sea el modo
+   que sea, asi que no conviene compartir las clases exclusivas del Pro. */
+.piloto-header--with-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.piloto-header-nav {
+  display: flex;
+  gap: 18px;
+}
+
+.piloto-header-nav-tab {
+  padding: 4px 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #64748b;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+
+.piloto-header-nav-tab:hover {
+  color: #0f172a;
+}
+
+.piloto-header-nav-tab.is-active {
+  color: #0f172a;
+  border-bottom-color: #6366f1;
+}
+
 .piloto-kicker {
   margin: 0;
   font-size: 15px;
