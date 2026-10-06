@@ -49,32 +49,38 @@ input {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 14px;
 }
 
 .piloto-header-nav {
   display: flex;
-  gap: 18px;
+  gap: 12px;
 }
 
+/* Mas notorio (06/10/2026, pedido explicito: "hacerla un poquito mas
+   notoria... un botoncito mas notorio") -- paso de texto subrayado a
+   chip con borde, mas grande y mas separado, para que se note a simple
+   vista que es clickeable y cual esta activa. */
 .piloto-header-nav-tab {
-  padding: 4px 0;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: #64748b;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
+  padding: 10px 20px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #334155;
+  background: #ffffff;
+  border: 2px solid #cbd5e1;
+  border-radius: 999px;
   cursor: pointer;
 }
 
 .piloto-header-nav-tab:hover {
-  color: #0f172a;
+  border-color: #94a3b8;
 }
 
 .piloto-header-nav-tab.is-active {
-  color: #0f172a;
-  border-bottom-color: #6366f1;
+  color: #ffffff;
+  background-color: #111;
+  border-color: #111;
 }
 
 .piloto-kicker {
@@ -962,12 +968,42 @@ input {
   padding: 4px 0 20px;
 }
 
-.piloto-clientes-toolbar {
+/* 3 columnas (06/10/2026, pedido explicito: "hacerlo con tres columnas,
+   como habiamos hecho en el Joker" -- izquierda ingresar, medio listado,
+   derecha detalle). Apiladas en mobile, 3 columnas lado a lado desde un
+   ancho razonable de tablet/PC en adelante. */
+.piloto-clientes-columns {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 900px) {
+  .piloto-clientes-columns {
+    grid-template-columns: minmax(220px, 280px) minmax(240px, 320px) 1fr;
+    align-items: start;
+  }
+}
+
+.piloto-clientes-col {
+  border: 1px solid #dbe4ee;
+  border-radius: 14px;
+  background: #fff;
+  padding: 16px;
+}
+
+.piloto-clientes-col-title {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+}
+
+.piloto-clientes-form {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
+  flex-direction: column;
+}
+
+.piloto-clientes-detail-header h3 {
+  margin: 0 0 2px;
 }
 
 .piloto-clientes-back {
@@ -1027,6 +1063,11 @@ input {
 .piloto-clientes-row__debt--owes {
   color: #b23a3a;
   font-weight: 700;
+}
+
+.piloto-clientes-row.is-active {
+  border-color: #111;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
 }
 
 .piloto-clientes-detail-header h2 {
@@ -1096,9 +1137,14 @@ input {
 }
 
 .piloto-clientes-entry__items {
-  margin: 0;
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
   color: #6b7280;
   font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .piloto-clientes-danger-zone {

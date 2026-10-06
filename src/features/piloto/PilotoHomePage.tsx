@@ -153,8 +153,13 @@ export function PilotoHomePage() {
     }
   }, [isPro, activeRegisterId, registerSummaries, setActiveRegisterId]);
 
+  // "Precios" y "Panel" son exclusivas de Pro -- si se sale de Pro estando
+  // en cualquiera de esas dos, se vuelve a Productos. "Clientes" NO entra
+  // en este guard (06/10/2026, bug reportado: "le hago clic a clientes y
+  // no me lleva" -- era este mismo efecto pisando el cambio de pestana al
+  // toque, porque Clientes tambien es valida en Basico).
   useEffect(() => {
-    if (!isPro && activeTopTab !== "productos") {
+    if (!isPro && (activeTopTab === "precios" || activeTopTab === "panel")) {
       setActiveTopTab("productos");
     }
   }, [isPro, activeTopTab]);
