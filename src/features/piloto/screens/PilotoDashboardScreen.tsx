@@ -129,7 +129,10 @@ export function PilotoDashboardScreen() {
                 {visibleSales.map((sale) => {
                   const isExpanded = expandedSaleIds.has(sale.id);
                   return (
-                    <li key={sale.id} className="piloto-dashboard-movement">
+                    <li
+                      key={sale.id}
+                      className={isExpanded ? "piloto-dashboard-movement is-expanded" : "piloto-dashboard-movement"}
+                    >
                       <div
                         className="piloto-dashboard-movement__header"
                         role="button"
@@ -146,23 +149,29 @@ export function PilotoDashboardScreen() {
                         <span className={isExpanded ? "piloto-dashboard-movement__chevron is-open" : "piloto-dashboard-movement__chevron"}>
                           ›
                         </span>
-                        <strong>Venta #{sale.displayNumber}</strong>
+                        <span className="piloto-dashboard-movement__badge">#{sale.displayNumber}</span>
                         <span className="piloto-dashboard-movement__time">{formatTime(sale.createdAt)}</span>
                         <strong className="piloto-dashboard-movement__total">{formatCurrency(sale.totalAmount)}</strong>
                       </div>
 
                       {isExpanded ? (
-                        <ul className="piloto-dashboard-movement__detail">
-                          {sale.items.map((item, index) => (
-                            <li key={index}>
-                              <span>
-                                {item.quantity > 1 ? `${item.quantity}x ` : ""}
-                                {item.name}
-                              </span>
-                              <span>{formatCurrency(item.lineTotal)}</span>
-                            </li>
-                          ))}
-                        </ul>
+                        <div className="piloto-dashboard-receipt">
+                          <ul className="piloto-dashboard-movement__detail">
+                            {sale.items.map((item, index) => (
+                              <li key={index}>
+                                <span className="piloto-dashboard-movement__item-name">
+                                  {item.quantity > 1 ? <span className="piloto-dashboard-movement__qty">{item.quantity}×</span> : null}
+                                  {item.name}
+                                </span>
+                                <span className="piloto-dashboard-movement__item-price">{formatCurrency(item.lineTotal)}</span>
+                              </li>
+                            ))}
+                          </ul>
+                          <div className="piloto-dashboard-receipt__total">
+                            <span>Total</span>
+                            <strong>{formatCurrency(sale.totalAmount)}</strong>
+                          </div>
+                        </div>
                       ) : (
                         <p className="piloto-dashboard-movement__items">
                           {sale.items.map((item) => (item.quantity > 1 ? `${item.quantity}x ${item.name}` : item.name)).join(", ")}

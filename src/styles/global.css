@@ -171,11 +171,14 @@ input {
    barra fina pegada arriba, sin tarjeta ni sombra, todo alineado a la
    izquierda en vez de repartido -- logo y pestanas juntos, como un
    navbar clasico de toda la vida. Ver ProHeader.tsx. */
+/* Pedido explicito (14/10/2026): "Piloto" queda solo a la izquierda y las
+   pestanas (Productos/Precios/Panel/Clientes) se van a la derecha. */
 .piloto-pro-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   flex-wrap: wrap;
-  gap: 22px;
+  gap: 14px;
   padding: 6px 2px 10px;
   border-bottom: 1px solid #e2e8f0;
 }
@@ -194,27 +197,35 @@ input {
 
 .piloto-pro-nav {
   display: flex;
-  gap: 20px;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
+/* Pedido explicito (14/10/2026): "un toque mas de UX... que se vean mas
+   como botones" -- de pestanas subrayadas a chips/pildora con fondo
+   propio, en vez de solo una linea abajo cuando estan activas. */
 .piloto-pro-nav-tab {
-  padding: 4px 0;
-  font-size: 0.95rem;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 0.9rem;
   font-weight: 600;
-  color: #64748b;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
+  color: #475569;
+  background: #f1f5f9;
+  border: 1px solid transparent;
   cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .piloto-pro-nav-tab:hover {
+  background: #e2e8f0;
   color: #0f172a;
 }
 
 .piloto-pro-nav-tab.is-active {
-  color: #0f172a;
-  border-bottom-color: #6366f1;
+  background: #6366f1;
+  border-color: #6366f1;
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.28);
 }
 
 /* "Panel de control" -- Modo Pro (24/09/2026, pedido explicito): ventas +
@@ -312,15 +323,33 @@ input {
   border-radius: 12px;
   background: #ffffff;
   border: 1px solid #e2e8f0;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Pedido explicito (14/10/2026): "dale mas UX, ta muy basico" -- la
+   tarjeta se levanta un poco y se le marca el borde con el color de
+   acento mientras esta abierta, para que se note que es "la ventana que
+   esta abierta ahora", no solo otra fila mas de la lista. */
+.piloto-dashboard-movement.is-expanded {
+  border-color: #6366f1;
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.12);
 }
 
 /* Clickeable: hacer click en una venta muestra el detalle de productos
    (24/09/2026, pedido explicito: "uno arriba del otro, con el precio"). */
 .piloto-dashboard-movement__header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 10px;
+  margin: -6px -8px;
+  padding: 6px 8px;
+  border-radius: 10px;
   cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.piloto-dashboard-movement__header:hover {
+  background: #f8fafc;
 }
 
 .piloto-dashboard-movement__chevron {
@@ -331,39 +360,103 @@ input {
 
 .piloto-dashboard-movement__chevron.is-open {
   transform: rotate(90deg);
+  color: #6366f1;
 }
 
-.piloto-dashboard-movement__detail {
-  list-style: none;
-  margin: 8px 0 0;
-  padding: 8px 0 0;
-  border-top: 1px dashed #e2e8f0;
-  display: grid;
-  gap: 6px;
-}
-
-.piloto-dashboard-movement__detail li {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-  color: #334155;
+/* Numero de venta como chip, en vez de texto plano -- se distingue mas
+   rapido escaneando la lista de arriba a abajo. */
+.piloto-dashboard-movement__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #4338ca;
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .piloto-dashboard-movement__time {
   color: #94a3b8;
   font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
 }
 
 .piloto-dashboard-movement__total {
   margin-left: auto;
   color: #0f172a;
+  font-variant-numeric: tabular-nums;
 }
 
 .piloto-dashboard-movement__items {
   margin: 4px 0 0;
   color: #64748b;
   font-size: 0.95rem;
+}
+
+/* El detalle expandido, armado como un ticket: items alineados numero
+   contra numero y un renglon de Total separado por una linea solida al
+   pie (antes solo era una lista sin jerarquia -- "muy basico"). */
+.piloto-dashboard-receipt {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #cbd5e1;
+  animation: piloto-receipt-in 0.15s ease-out;
+}
+
+@keyframes piloto-receipt-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.piloto-dashboard-movement__detail {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 7px;
+}
+
+.piloto-dashboard-movement__detail li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  color: #334155;
+  font-size: 0.93rem;
+}
+
+.piloto-dashboard-movement__item-name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.piloto-dashboard-movement__qty {
+  margin-right: 5px;
+  color: #6366f1;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.piloto-dashboard-movement__item-price {
+  flex-shrink: 0;
+  color: #475569;
+  font-variant-numeric: tabular-nums;
+}
+
+.piloto-dashboard-receipt__total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e2e8f0;
+  color: #0f172a;
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
 }
 
 /* "Precios": subpestanas con icono. */
