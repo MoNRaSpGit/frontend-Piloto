@@ -132,20 +132,18 @@ export function PilotoDashboardScreen() {
                     <li
                       key={sale.id}
                       className={isExpanded ? "piloto-dashboard-movement is-expanded" : "piloto-dashboard-movement"}
+                      role="button"
+                      tabIndex={0}
+                      aria-expanded={isExpanded}
+                      onClick={() => toggleSaleDetail(sale.id)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          toggleSaleDetail(sale.id);
+                        }
+                      }}
                     >
-                      <div
-                        className="piloto-dashboard-movement__header"
-                        role="button"
-                        tabIndex={0}
-                        aria-expanded={isExpanded}
-                        onClick={() => toggleSaleDetail(sale.id)}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter" || event.key === " ") {
-                            event.preventDefault();
-                            toggleSaleDetail(sale.id);
-                          }
-                        }}
-                      >
+                      <div className="piloto-dashboard-movement__header">
                         <span className={isExpanded ? "piloto-dashboard-movement__chevron is-open" : "piloto-dashboard-movement__chevron"}>
                           ›
                         </span>

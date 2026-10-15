@@ -318,12 +318,21 @@ input {
   gap: 10px;
 }
 
+/* Pedido explicito (14/10/2026): "con un simple click que ya se abra, no
+   preciso apretar la flechita" -- toda la tarjeta es clickeable, no solo
+   la fila del encabezado (antes el resumen de productos colapsado no
+   reaccionaba al click). */
 .piloto-dashboard-movement {
   padding: 12px 14px;
   border-radius: 12px;
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.piloto-dashboard-movement:hover {
+  background: #f8fafc;
 }
 
 /* Pedido explicito (14/10/2026): "dale mas UX, ta muy basico" -- la
@@ -335,21 +344,14 @@ input {
   box-shadow: 0 6px 16px rgba(99, 102, 241, 0.12);
 }
 
-/* Clickeable: hacer click en una venta muestra el detalle de productos
-   (24/09/2026, pedido explicito: "uno arriba del otro, con el precio"). */
+.piloto-dashboard-movement.is-expanded:hover {
+  background: #ffffff;
+}
+
 .piloto-dashboard-movement__header {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: -6px -8px;
-  padding: 6px 8px;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.piloto-dashboard-movement__header:hover {
-  background: #f8fafc;
 }
 
 .piloto-dashboard-movement__chevron {
