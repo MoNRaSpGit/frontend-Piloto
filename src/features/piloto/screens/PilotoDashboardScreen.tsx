@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { getSalesSummary } from "../piloto.api";
-import type { PilotoSalesSummary } from "../piloto.types";
+import type { PilotoSalesSummary, PilotoSaleMovement } from "../piloto.types";
+import { printSaleTicketByQz } from "../services/piloto.qzPrint";
 
 // "Panel de control" -- Modo Pro (24/09/2026, pedido explicito): "las
 // ventas, o sea la suma de las ventas, y al lado la ganancia que seria
@@ -42,6 +43,33 @@ export function PilotoDashboardScreen() {
   // con el precio". Cada venta se abre/cierra independiente de las
   // demas -- un Set en vez de "solo una a la vez".
   const [expandedSaleIds, setExpandedSaleIds] = useState<Set<number>>(new Set());
+  // Reimprimir desde el panel (pedido explicito): "por si se me escapa
+  // imprimir, poder ir a la venta que hice y reimprimir" -- reusa el
+  // mismo camino que ya usa el cobro en Modo Pro (solo QZ, sin el
+  // fallback RawBT/WebUSB de la version no-Pro).
+  const [reprintingSaleId, setReprintingSaleId] = useState<number | null>(null);
+
+  function handleReprint(event: React.MouseEvent, sale: PilotoSaleMovement) {
+    event.stopPropagation();
+    if (reprintingSaleId !== null) return;
+    setReprintingSaleId(sale.id);
+    printSaleTicketByQz({
+      externalId: `piloto-${sale.id}-reimpresion-${Date.now()}`,
+      chargedAtIso: sale.createdAt,
+      paymentMethod: sale.paymentMethod,
+      items: sale.items.map((item) => ({
+        productId: 0,
+        name: item.name,
+        price: item.unitPrice,
+        quantity: item.quantity,
+        imageUrl: null
+      })),
+      total: sale.totalAmount
+    })
+      .then(() => toast.success(`Venta #${sale.displayNumber} reimpresa.`))
+      .catch((error) => toast.error(error instanceof Error ? `No se pudo reimprimir: ${error.message}` : "No se pudo reimprimir el ticket."))
+      .finally(() => setReprintingSaleId(null));
+  }
 
   function toggleSaleDetail(saleId: number) {
     setExpandedSaleIds((current) => {
@@ -169,6 +197,14 @@ export function PilotoDashboardScreen() {
                             <span>Total</span>
                             <strong>{formatCurrency(sale.totalAmount)}</strong>
                           </div>
+                          <button
+                            type="button"
+                            className="piloto-dashboard-reprint-btn"
+                            disabled={reprintingSaleId === sale.id}
+                            onClick={(event) => handleReprint(event, sale)}
+                          >
+                            {reprintingSaleId === sale.id ? "Imprimiendo..." : "Reimprimir"}
+                          </button>
                         </div>
                       ) : (
                         <p className="piloto-dashboard-movement__items">
