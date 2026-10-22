@@ -1,6 +1,7 @@
 import { useRef, useState, type FormEvent } from "react";
 import { useEscapeToCancel } from "../hooks/useEscapeToCancel";
 import type { PilotoPriceEntry } from "../piloto.types";
+import { sanitizePriceInput } from "../services/piloto.priceInput";
 
 type PriceEntryModalProps = {
   // Si viene un precio existente, el modal edita ese registro (solo
@@ -95,7 +96,7 @@ export function PriceEntryModal({ entry, categoryLabel, onClose, onSave }: Price
             <input
               ref={priceInputRef}
               value={priceInput}
-              onChange={(event) => setPriceInput(event.target.value)}
+              onChange={(event) => setPriceInput(sanitizePriceInput(event.target.value))}
               inputMode="decimal"
               placeholder="Ej: 250"
               disabled={isSaving}

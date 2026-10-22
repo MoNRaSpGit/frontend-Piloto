@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useEscapeToCancel } from "../hooks/useEscapeToCancel";
+import { sanitizePriceInput } from "../services/piloto.priceInput";
 
 type ManualProductModalProps = {
   // Los 4 botones de categoria de Modo Pro (23/09/2026, pedido explicito)
@@ -56,7 +57,7 @@ export function ManualProductModal({ title = "Producto Manual", onClose, onConfi
             <input
               ref={priceInputRef}
               value={priceInput}
-              onChange={(event) => setPriceInput(event.target.value)}
+              onChange={(event) => setPriceInput(sanitizePriceInput(event.target.value))}
               inputMode="decimal"
               placeholder="Ej: 150"
             />

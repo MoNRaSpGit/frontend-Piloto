@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useEscapeToCancel } from "../hooks/useEscapeToCancel";
 import type { CartItem } from "../piloto.types";
+import { sanitizePriceInput } from "../services/piloto.priceInput";
 
 type ScannerCartProps = {
   items: CartItem[];
@@ -144,7 +145,7 @@ function EditItemModal({
             <input
               ref={priceInputRef}
               value={price}
-              onChange={(event) => setPrice(event.target.value)}
+              onChange={(event) => setPrice(sanitizePriceInput(event.target.value))}
               inputMode="decimal"
               disabled={isSaving}
             />

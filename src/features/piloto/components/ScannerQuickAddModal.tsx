@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useEscapeToCancel } from "../hooks/useEscapeToCancel";
+import { sanitizePriceInput } from "../services/piloto.priceInput";
 
 type ScannerQuickAddModalProps = {
   barcode: string;
@@ -88,7 +89,7 @@ export function ScannerQuickAddModal({ barcode, onClose, onConfirm }: ScannerQui
             <input
               ref={priceInputRef}
               value={priceInput}
-              onChange={(event) => setPriceInput(event.target.value)}
+              onChange={(event) => setPriceInput(sanitizePriceInput(event.target.value))}
               inputMode="decimal"
               placeholder="Ej: 150"
               disabled={isSubmitting}
