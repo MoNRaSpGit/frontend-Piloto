@@ -17,10 +17,11 @@ import type { PilotoClient } from "./piloto.types";
 import { printSaleTicketByQz } from "./services/piloto.qzPrint";
 import { ClientesScreen } from "./screens/ClientesScreen";
 import { PilotoDashboardScreen } from "./screens/PilotoDashboardScreen";
+import { PilotoImagesScreen } from "./screens/PilotoImagesScreen";
 import { PilotoPricesScreen } from "./screens/PilotoPricesScreen";
 import { setAppBusy } from "../../shared/state/appActivity";
 
-type PilotoTopTab = "productos" | "precios" | "panel" | "clientes";
+type PilotoTopTab = "productos" | "precios" | "panel" | "clientes" | "imagenes";
 
 const NOT_FOUND_MESSAGE = "Producto no encontrado.";
 // Ya no se elige medio de pago en la UI (pedido explicito, 16/09/2026:
@@ -159,7 +160,7 @@ export function PilotoHomePage() {
   // no me lleva" -- era este mismo efecto pisando el cambio de pestana al
   // toque, porque Clientes tambien es valida en Basico).
   useEffect(() => {
-    if (!isPro && (activeTopTab === "precios" || activeTopTab === "panel")) {
+    if (!isPro && (activeTopTab === "precios" || activeTopTab === "panel" || activeTopTab === "imagenes")) {
       setActiveTopTab("productos");
     }
   }, [isPro, activeTopTab]);
@@ -483,6 +484,8 @@ export function PilotoHomePage() {
         <PilotoPricesScreen registers={registerSummaries} defaultRegisterId={registerSummaries[0]?.id ?? 1} onAddToRegister={addManualItemToRegister} />
       ) : activeTopTab === "panel" && isPro ? (
         <PilotoDashboardScreen />
+      ) : activeTopTab === "imagenes" && isPro ? (
+        <PilotoImagesScreen />
       ) : (
         <>
           <RegisterTabs registers={visibleRegisterSummaries} activeRegisterId={activeRegisterId} onSelect={handleSelectRegister} />

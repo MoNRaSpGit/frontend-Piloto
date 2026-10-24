@@ -61,6 +61,15 @@ async function readJson<T>(response: Response): Promise<T> {
   return (await response.json()) as T;
 }
 
+// Listado de productos (24/10/2026, pedido explicito): se agrego para la
+// pestana "Imagenes" -- muestra los productos recien migrados a Cloudinary,
+// filtrados del lado del cliente por sus ids.
+export async function listProducts(): Promise<PilotoProduct[]> {
+  const response = await fetch(`${API_BASE_URL}/piloto/products`, { cache: "no-store" });
+  const raw = await readJson<{ items: RawPilotoProduct[] }>(response);
+  return raw.items.map(mapProduct);
+}
+
 export async function findProductByBarcode(barcode: string): Promise<ProductResponse> {
   const normalizedBarcode = normalizeBarcode(barcode);
 
