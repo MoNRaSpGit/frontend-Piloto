@@ -62,10 +62,12 @@ async function readJson<T>(response: Response): Promise<T> {
 }
 
 // Listado de productos (24/10/2026, pedido explicito): se agrego para la
-// pestana "Imagenes" -- muestra los productos recien migrados a Cloudinary,
-// filtrados del lado del cliente por sus ids.
-export async function listProducts(): Promise<PilotoProduct[]> {
-  const response = await fetch(`${API_BASE_URL}/piloto/products`, { cache: "no-store" });
+// pestana "Imagenes". Con `ids` pide esos productos puntuales -- el
+// listado general trae como mucho 100 ordenados por nombre, y podia dejar
+// afuera productos de id bajo (ver bug reportado: "salio solo 1 de 10").
+export async function listProducts(ids?: number[]): Promise<PilotoProduct[]> {
+  const query = ids && ids.length ? `?ids=${ids.join(",")}` : "";
+  const response = await fetch(`${API_BASE_URL}/piloto/products${query}`, { cache: "no-store" });
   const raw = await readJson<{ items: RawPilotoProduct[] }>(response);
   return raw.items.map(mapProduct);
 }

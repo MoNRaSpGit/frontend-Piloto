@@ -17,8 +17,8 @@ export function PilotoImagesScreen() {
   function load() {
     setLoadError(null);
     setProducts(null);
-    listProducts()
-      .then((items) => setProducts(items.filter((item) => MIGRATED_PRODUCT_IDS.includes(item.id))))
+    listProducts(MIGRATED_PRODUCT_IDS)
+      .then(setProducts)
       .catch((error) => {
         const message = error instanceof Error ? error.message : "No se pudieron cargar los productos.";
         setLoadError(message);
