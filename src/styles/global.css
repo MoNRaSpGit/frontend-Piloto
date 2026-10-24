@@ -1543,3 +1543,38 @@ input {
     gap: 6px;
   }
 }
+
+/* Pestana "Tickets" (Modo Pro, 24/10/2026): reusa la tabla de Precios;
+   la columna del codigo va en letra monoespaciada para leerla facil. */
+.piloto-tickets-code {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+/* Columnas propias de la tabla de Tickets (la de Precios tiene otro
+   orden de columnas). */
+.piloto-tickets-table th:nth-child(1) {
+  width: 130px;
+}
+
+.piloto-tickets-table th:nth-child(2) {
+  width: auto;
+}
+
+.piloto-tickets-table th:nth-child(3) {
+  width: 110px;
+}
+
+.piloto-tickets-table th:nth-child(4),
+.piloto-tickets-table th:nth-child(5) {
+  width: 120px;
+}
+
+.piloto-tickets-table th.text-center {
+  text-align: center;
+}
+
+.piloto-tickets-table th.text-end {
+  text-align: right;
+}

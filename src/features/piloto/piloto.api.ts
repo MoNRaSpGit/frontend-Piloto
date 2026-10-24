@@ -224,3 +224,21 @@ export async function settleAccount(clientId: number): Promise<void> {
   const response = await fetch(`${API_BASE_URL}/piloto/account-entries/client/${clientId}`, { method: "DELETE" });
   await readJson<{ ok: true }>(response);
 }
+
+// Pestana "Tickets" (Modo Pro, 24/10/2026): productos con codigo de barras
+// inventado para imprimir en la tiquetera. Editar = updateProduct.
+export async function listTickets(): Promise<PilotoProduct[]> {
+  const response = await fetch(`${API_BASE_URL}/piloto/tickets`, { cache: "no-store" });
+  const raw = await readJson<{ items: RawPilotoProduct[] }>(response);
+  return raw.items.map(mapProduct);
+}
+
+export async function createTicket(barcode: string, name: string, price: number): Promise<ProductResponse> {
+  const response = await fetch(`${API_BASE_URL}/piloto/tickets`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ barcode: normalizeBarcode(barcode), name, price })
+  });
+  const raw = await readJson<RawProductResponse>(response);
+  return { item: mapProduct(raw.item) };
+}

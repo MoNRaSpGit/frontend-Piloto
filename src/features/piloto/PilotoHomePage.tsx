@@ -19,9 +19,10 @@ import { ClientesScreen } from "./screens/ClientesScreen";
 import { PilotoDashboardScreen } from "./screens/PilotoDashboardScreen";
 import { PilotoImagesScreen } from "./screens/PilotoImagesScreen";
 import { PilotoPricesScreen } from "./screens/PilotoPricesScreen";
+import { PilotoTicketsScreen } from "./screens/PilotoTicketsScreen";
 import { setAppBusy } from "../../shared/state/appActivity";
 
-type PilotoTopTab = "productos" | "precios" | "panel" | "clientes" | "imagenes";
+type PilotoTopTab = "productos" | "precios" | "panel" | "clientes" | "imagenes" | "tickets";
 
 const NOT_FOUND_MESSAGE = "Producto no encontrado.";
 // Ya no se elige medio de pago en la UI (pedido explicito, 16/09/2026:
@@ -160,7 +161,7 @@ export function PilotoHomePage() {
   // no me lleva" -- era este mismo efecto pisando el cambio de pestana al
   // toque, porque Clientes tambien es valida en Basico).
   useEffect(() => {
-    if (!isPro && (activeTopTab === "precios" || activeTopTab === "panel" || activeTopTab === "imagenes")) {
+    if (!isPro && (activeTopTab === "precios" || activeTopTab === "panel" || activeTopTab === "imagenes" || activeTopTab === "tickets")) {
       setActiveTopTab("productos");
     }
   }, [isPro, activeTopTab]);
@@ -486,6 +487,8 @@ export function PilotoHomePage() {
         <PilotoDashboardScreen />
       ) : activeTopTab === "imagenes" && isPro ? (
         <PilotoImagesScreen />
+      ) : activeTopTab === "tickets" && isPro ? (
+        <PilotoTicketsScreen />
       ) : (
         <>
           <RegisterTabs registers={visibleRegisterSummaries} activeRegisterId={activeRegisterId} onSelect={handleSelectRegister} />

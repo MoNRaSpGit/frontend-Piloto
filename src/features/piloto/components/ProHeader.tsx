@@ -1,4 +1,4 @@
-type ProTopTab = "productos" | "precios" | "panel" | "clientes" | "imagenes";
+type ProTopTab = "productos" | "precios" | "panel" | "clientes" | "imagenes" | "tickets";
 
 type ProHeaderProps = {
   activeTopTab: ProTopTab;
@@ -73,6 +73,16 @@ export function ProHeader({ activeTopTab, onSelectTab, onTitleClick }: ProHeader
           onClick={() => onSelectTab("imagenes")}
         >
           Imagenes
+        </button>
+        {/* Tickets con codigo de barras inventado (24/10/2026). */}
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTopTab === "tickets"}
+          className={activeTopTab === "tickets" ? "piloto-pro-nav-tab is-active" : "piloto-pro-nav-tab"}
+          onClick={() => onSelectTab("tickets")}
+        >
+          Tickets
         </button>
       </nav>
     </header>

@@ -1,6 +1,6 @@
 import qz from "qz-tray";
 import { API_BASE_URL } from "../../../shared/config/api";
-import { buildRawTicketLines, type SaleTicket } from "./piloto.ticketFormat";
+import { buildRawBarcodeTicketLines, buildRawTicketLines, type BarcodeTicket, type SaleTicket } from "./piloto.ticketFormat";
 
 export type { SaleTicket };
 
@@ -90,8 +90,17 @@ async function ensureQzConnected() {
 }
 
 export async function printSaleTicketByQz(ticket: SaleTicket) {
+  return printRawByQz(buildRawTicketLines(ticket, { drawerKick: true }));
+}
+
+// Tickets con codigo de barras (pestana "Tickets"): misma impresora y
+// mismo mecanismo que el ticket de venta, sin abrir el cajon.
+export async function printBarcodeTicketsByQz(ticket: BarcodeTicket, copies: number) {
+  return printRawByQz(buildRawBarcodeTicketLines(ticket, copies));
+}
+
+async function printRawByQz(data: string[]) {
   await ensureQzConnected();
-  const data = buildRawTicketLines(ticket, { drawerKick: true });
 
   const attemptPrinter = async (printerName: string) => {
     const config = qz.configs.create(printerName, { encoding: "CP437" });
