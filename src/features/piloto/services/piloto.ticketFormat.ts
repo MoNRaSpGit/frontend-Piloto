@@ -95,16 +95,11 @@ export function buildRawTicketLines(ticket: SaleTicket, options: { drawerKick?: 
   return lines;
 }
 
-// Tickets con codigo de barras (pestana "Tickets", 24/10/2026): por cada
-// copia sale el nombre y el precio grandes y abajo el codigo de barras
-// (CODE128 con el numero impreso debajo), y se corta. El lector lo lee
-// como cualquier producto.
+// Tickets con codigo de barras (pestana "Tickets", 24/10/2026; 27/10/2026
+// pedido explicito: "que diga solo el codigo de barra nomas" -- se saco el
+// nombre y el precio grandes, queda solo el codigo (CODE128 con el numero
+// impreso debajo), y se corta. El lector lo lee como cualquier producto.
 export type BarcodeTicket = { barcode: string; name: string; price: number };
-
-function shortMoney(value: number) {
-  const amount = Number(value || 0);
-  return Number.isInteger(amount) ? String(amount) : amount.toFixed(2);
-}
 
 export function buildRawBarcodeTicketLines(ticket: BarcodeTicket, copies: number) {
   const code = `{B${ticket.barcode}`;
@@ -112,11 +107,6 @@ export function buildRawBarcodeTicketLines(ticket: BarcodeTicket, copies: number
   for (let copy = 0; copy < copies; copy += 1) {
     lines.push("\x1B\x40");
     lines.push("\x1B\x61\x01");
-    lines.push("\x1D\x21\x11");
-    lines.push(`${ticket.name}\n`);
-    lines.push(`$${shortMoney(ticket.price)}\n`);
-    lines.push("\x1D\x21\x00");
-    lines.push("\n");
     // Alto 80 puntos, ancho de barra 2, numero debajo del codigo.
     lines.push("\x1D\x68\x50");
     lines.push("\x1D\x77\x02");
