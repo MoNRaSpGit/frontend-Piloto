@@ -246,25 +246,32 @@ export async function createTicket(barcode: string, name: string, price: number)
 // Venta del "fondo" (30/10/2026, pedido explicito): la tablet del fondo
 // guarda en el servidor lo que va escaneando; el mostrador la lee y la
 // "toma" a su caja (eso la vacia, en una sola operacion del servidor).
-// items/sentAt: lo que ve el mostrador (lo enviado si hay, si no lo que la
-// tablet esta pasando). draftItems: lo que la tablet esta pasando ahora.
-export type PilotoFondoCart = { items: CartItem[]; sentAt: string | null; updatedAt: string | null; draftItems: CartItem[] };
+// Cada "Enviar" de la tablet es un pedido aparte (Pedido 1, 2, 3... en orden
+// de llegada). draftItems: lo que la tablet esta pasando ahora, sin enviar.
+export type PilotoFondoOrder = { id: number; number: number; items: CartItem[]; sentAt: string | null };
+export type PilotoFondoState = { orders: PilotoFondoOrder[]; draftItems: CartItem[] };
 
-export async function getFondoCart(): Promise<PilotoFondoCart> {
+export async function getFondoState(): Promise<PilotoFondoState> {
   const response = await fetch(`${API_BASE_URL}/piloto/fondo`, { cache: "no-store" });
-  return readJson<PilotoFondoCart>(response);
+  return readJson<PilotoFondoState>(response);
 }
 
-export async function setFondoCart(items: CartItem[], sent = false): Promise<PilotoFondoCart> {
+// sent = true: "Enviar al mostrador" (arma un pedido nuevo y vacia la tablet).
+export async function setFondoCart(items: CartItem[], sent = false): Promise<PilotoFondoState> {
   const response = await fetch(`${API_BASE_URL}/piloto/fondo`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ items, sent })
   });
-  return readJson<PilotoFondoCart>(response);
+  return readJson<PilotoFondoState>(response);
 }
 
-export async function takeFondoCart(): Promise<PilotoFondoCart> {
-  const response = await fetch(`${API_BASE_URL}/piloto/fondo/take`, { method: "POST" });
-  return readJson<PilotoFondoCart>(response);
+// orderId: el pedido a tomar. Sin orderId: lo que la tablet esta pasando.
+export async function takeFondoOrder(orderId?: number): Promise<{ items: CartItem[] }> {
+  const response = await fetch(`${API_BASE_URL}/piloto/fondo/take`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(orderId ? { orderId } : {})
+  });
+  return readJson<{ items: CartItem[] }>(response);
 }

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import { findProductByBarcode, getFondoCart, setFondoCart } from "../piloto.api";
+import { findProductByBarcode, getFondoState, setFondoCart } from "../piloto.api";
 import type { CartItem } from "../piloto.types";
 import { ManualProductModal } from "../components/ManualProductModal";
 import { ScannerCart } from "../components/ScannerCart";
@@ -57,7 +57,7 @@ export function PilotoTabletScreen() {
     async function poll(initial: boolean) {
       if (!initial && Date.now() - lastWriteRef.current < WRITE_GRACE_MS) return;
       try {
-        const cart = await getFondoCart();
+        const cart = await getFondoState();
         if (cancelled) return;
         if (initial) {
           setItems(cart.draftItems);

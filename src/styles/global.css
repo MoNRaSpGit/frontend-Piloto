@@ -1709,11 +1709,22 @@ input {
   cursor: pointer;
 }
 
-.piloto-fondo-pill {
+/* Pedidos del fondo apilados en orden (Pedido 1 arriba). */
+.piloto-fondo-stack {
   position: fixed;
   left: 20px;
   bottom: 20px;
   z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 4px 12px 4px 0;
+}
+
+.piloto-fondo-pill {
   display: flex;
   align-items: center;
   gap: 10px;
