@@ -8,6 +8,10 @@ type ScannerInputProps = {
   isLoading: boolean;
   error: string;
   focusSignal: number;
+  // Tablet del fondo (30/10/2026, pedido explicito: "que no abra ningun
+  // teclado, esta molestando"): el campo sigue recibiendo lo que tipea el
+  // lector, pero la pantalla tactil no despliega el teclado.
+  noKeyboard?: boolean;
 };
 
 // Algunos lectores, al reconectarse mal, mandan el mismo digito repetido
@@ -21,7 +25,7 @@ function isLikelyInvalidScan(value: string) {
   return REPEATED_DIGIT_PATTERN.test(value);
 }
 
-export function ScannerInput({ value, onChange, onSubmit, onEmptyEnter, isLoading, error, focusSignal }: ScannerInputProps) {
+export function ScannerInput({ value, onChange, onSubmit, onEmptyEnter, isLoading, error, focusSignal, noKeyboard = false }: ScannerInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [invalidScanWarning, setInvalidScanWarning] = useState("");
 
@@ -59,7 +63,7 @@ export function ScannerInput({ value, onChange, onSubmit, onEmptyEnter, isLoadin
           ref={inputRef}
           className="piloto-scanner-input"
           type="text"
-          inputMode="numeric"
+          inputMode={noKeyboard ? "none" : "numeric"}
           autoComplete="off"
           placeholder="Escanear aqui"
           value={value}

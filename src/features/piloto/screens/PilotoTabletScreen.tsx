@@ -153,6 +153,7 @@ export function PilotoTabletScreen() {
         isLoading={isLoading}
         error={error}
         focusSignal={focusSignal}
+        noKeyboard
       />
 
       <button type="button" className="piloto-tablet__manual" onClick={() => setIsManualOpen(true)}>
