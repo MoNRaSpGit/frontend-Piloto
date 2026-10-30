@@ -138,11 +138,9 @@ export function PilotoTabletScreen() {
 
   return (
     <section className="piloto-tablet">
-      <div className="piloto-tablet__title">
-        <strong>Fondo</strong>
-        <span>Pasá los productos con el lector. El mostrador los ve al instante.</span>
-      </div>
-
+      {/* Bien limpia (30/10/2026, pedido explicito): sin titulos ni carteles
+          de "no hay productos"; la lista, el total y "Enviar" aparecen solo
+          cuando hay algo escaneado. */}
       <ScannerInput
         value={barcode}
         onChange={setBarcode}
@@ -182,26 +180,24 @@ export function PilotoTabletScreen() {
             </li>
           ))}
         </ul>
-      ) : (
-        <p className="piloto-tablet__empty">Todavía no hay productos.</p>
-      )}
+      ) : null}
 
-      <div className="piloto-tablet__footer">
-        <div className="piloto-tablet__total">
-          <span>
-            {count} producto{count === 1 ? "" : "s"}
-          </span>
-          <strong>{formatCurrency(total)}</strong>
-        </div>
-        <button type="button" className={sent ? "piloto-tablet__send is-sent" : "piloto-tablet__send"} disabled={!items.length} onClick={() => void handleSend()}>
-          {sent ? "✓ Enviado al mostrador" : "Enviar al mostrador"}
-        </button>
-        {items.length ? (
+      {items.length ? (
+        <div className="piloto-tablet__footer">
+          <div className="piloto-tablet__total">
+            <span>
+              {count} producto{count === 1 ? "" : "s"}
+            </span>
+            <strong>{formatCurrency(total)}</strong>
+          </div>
+          <button type="button" className={sent ? "piloto-tablet__send is-sent" : "piloto-tablet__send"} onClick={() => void handleSend()}>
+            {sent ? "✓ Enviado al mostrador" : "Enviar al mostrador"}
+          </button>
           <button type="button" className="piloto-tablet__clear" onClick={() => void handleClear()}>
             Borrar todo
           </button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
     </section>
   );
 }

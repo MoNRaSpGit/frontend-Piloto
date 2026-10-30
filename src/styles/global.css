@@ -1779,12 +1779,12 @@ input {
 
 /* Producto manual en la tablet del fondo: boton grande, facil de tocar. */
 .piloto-tablet__manual {
-  min-height: 64px;
+  min-height: 96px;
   border-radius: 16px;
-  border: 2px dashed #7c3aed;
-  background: #f5f3ff;
-  color: #5b21b6;
-  font-size: 1.35rem;
+  border: none;
+  background: #000000;
+  color: #ffffff;
+  font-size: 1.6rem;
   font-weight: 800;
   cursor: pointer;
 }

@@ -93,9 +93,8 @@ export function PilotoHomePage() {
   // volver a "productos" -- ver el efecto mas abajo.
   // ?tablet en la url (30/10/2026): la tablet del fondo abre directo en su
   // pestaña, sin tener que tocar nada.
-  const [activeTopTab, setActiveTopTab] = useState<PilotoTopTab>(() =>
-    new URLSearchParams(window.location.search).has("tablet") ? "tablet" : "productos"
-  );
+  const [isTabletOnly] = useState(() => new URLSearchParams(window.location.search).has("tablet"));
+  const [activeTopTab, setActiveTopTab] = useState<PilotoTopTab>(isTabletOnly ? "tablet" : "productos");
   const [isFondoOpen, setIsFondoOpen] = useState(false);
   // "Clientes" / "Fiar" (06/10/2026, pedido explicito): pestana propia en
   // la barra de navegacion (arriba a la derecha), siempre visible -- no
@@ -440,6 +439,16 @@ export function PilotoHomePage() {
     } finally {
       setIsFiarSubmitting(false);
     }
+  }
+
+  // La tablet del fondo abierta con ?tablet (30/10/2026, pedido explicito
+  // "dejalo bien limpito"): sin cabecera ni pestañas, solo su pantalla.
+  if (isTabletOnly) {
+    return (
+      <main className="piloto-shell">
+        <PilotoTabletScreen />
+      </main>
+    );
   }
 
   return (
