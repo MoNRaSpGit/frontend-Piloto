@@ -58,7 +58,12 @@ export function ManualProductModal({ title = "Producto Manual", onClose, onConfi
               ref={priceInputRef}
               value={priceInput}
               onChange={(event) => setPriceInput(sanitizePriceInput(event.target.value))}
-              inputMode="decimal"
+              // Teclado de numeros directo en la tablet (30/10/2026, pedido
+              // explicito): "decimal" en algunos teclados de Android abre el
+              // de letras; type="tel" abre siempre el numerico.
+              type="tel"
+              inputMode="numeric"
+              pattern="[0-9]*"
               placeholder="Ej: 150"
             />
           </label>

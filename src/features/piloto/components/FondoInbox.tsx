@@ -65,7 +65,7 @@ export function FondoInbox({ targetLabel, onTake, onOpenChange }: FondoInboxProp
       } else {
         toast.info("El fondo ya no tenía productos.");
       }
-      setCart({ items: [], sentAt: null, updatedAt: null });
+      setCart({ items: [], sentAt: null, updatedAt: null, draftItems: [] });
       setOpen(false);
     } catch {
       toast.error("No se pudo tomar la venta del fondo.");

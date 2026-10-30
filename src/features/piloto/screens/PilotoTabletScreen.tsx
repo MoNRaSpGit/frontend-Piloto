@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import { findProductByBarcode, getFondoCart, setFondoCart, updateProduct } from "../piloto.api";
+import { findProductByBarcode, getFondoCart, setFondoCart } from "../piloto.api";
 import type { CartItem } from "../piloto.types";
 import { ManualProductModal } from "../components/ManualProductModal";
 import { ScannerCart } from "../components/ScannerCart";
@@ -12,9 +12,10 @@ import { ScannerInput } from "../components/ScannerInput";
 // la ve y la toma a su caja cuando quiere (ver FondoInbox.tsx). Asi no se
 // mezclan los productos de dos clientes que se atienden al mismo tiempo.
 // Pensada para una persona mayor: solo el escaner y "Producto manual"; la
-// lista (la MISMA del mostrador, con - + y Editar), el total y "Enviar"
-// aparecen cuando hay algo escaneado. Sin carteles de aviso (pedido
-// explicito: "sacale todos los otros datos").
+// lista (la misma del mostrador, con - y +, sin Editar), el total y "Enviar"
+// aparecen cuando hay algo escaneado. Sin carteles ni "Borrar todo": al
+// enviar, la tablet queda vacia y empieza de nuevo (lo enviado queda
+// esperando en el mostrador, ver piloto-fondo.service.ts en el backend).
 
 const POLL_MS = 3000;
 // Despues de guardar, se ignora un ratito lo que diga el servidor para no
@@ -27,32 +28,30 @@ function formatCurrency(amount: number) {
 
 export function PilotoTabletScreen() {
   const [items, setItems] = useState<CartItem[]>([]);
-  const [sent, setSent] = useState(false);
   const [barcode, setBarcode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState("");
   const [focusSignal, setFocusSignal] = useState(0);
   const [isManualOpen, setIsManualOpen] = useState(false);
   const [lastScannedProductId, setLastScannedProductId] = useState<number | null>(null);
-  const [editingProductId, setEditingProductId] = useState<number | null>(null);
   const lastWriteRef = useRef(0);
   const itemsRef = useRef<CartItem[]>([]);
   itemsRef.current = items;
 
-  async function save(next: CartItem[], markSent = false) {
+  async function save(next: CartItem[]) {
     setItems(next);
     itemsRef.current = next;
     lastWriteRef.current = Date.now();
     try {
-      const saved = await setFondoCart(next, markSent);
-      setSent(saved.sentAt !== null);
+      await setFondoCart(next, false);
     } catch {
       toast.error("No se pudo guardar en el servidor. Revisá la conexión.");
     }
   }
 
-  // Al abrir, retoma lo que haya quedado del fondo; despues, cada pocos
-  // segundos se fija si el mostrador ya la tomo (el servidor queda vacio).
+  // Al abrir, retoma lo que haya quedado sin enviar; despues, cada pocos
+  // segundos se fija si el mostrador se lo llevo sin que se enviara.
   useEffect(() => {
     let cancelled = false;
     async function poll(initial: boolean) {
@@ -61,13 +60,10 @@ export function PilotoTabletScreen() {
         const cart = await getFondoCart();
         if (cancelled) return;
         if (initial) {
-          setItems(cart.items);
-          setSent(cart.sentAt !== null);
-        } else if (cart.items.length === 0 && itemsRef.current.length > 0) {
+          setItems(cart.draftItems);
+        } else if (cart.draftItems.length === 0 && itemsRef.current.length > 0) {
           setItems([]);
-          setSent(false);
           setLastScannedProductId(null);
-          setEditingProductId(null);
           setFocusSignal((s) => s + 1);
         }
       } catch {
@@ -124,34 +120,24 @@ export function PilotoTabletScreen() {
     setFocusSignal((s) => s + 1);
   }
 
-  // Editar: mismo criterio que el mostrador (PilotoHomePage
-  // handleEditCartItem) -- los productos reales se corrigen tambien en el
-  // catalogo; los manuales (id negativo) solo en esta lista.
-  async function handleEdit(productId: number, changes: { name: string; price: number }) {
-    if (productId > 0) {
-      try {
-        await updateProduct(productId, changes.name, changes.price);
-        toast.success("Producto actualizado.");
-      } catch (updateError) {
-        toast.error(updateError instanceof Error ? updateError.message : "No se pudo guardar el producto.");
-        return false;
-      }
-    }
-    await save(itemsRef.current.map((item) => (item.productId === productId ? { ...item, ...changes } : item)));
-    return true;
-  }
-
+  // Enviar: lo pasado queda esperando en el mostrador y la tablet arranca
+  // vacia para el proximo cliente. Si falla, no se borra nada.
   async function handleSend() {
-    if (!itemsRef.current.length) return;
-    await save(itemsRef.current, true);
-    setFocusSignal((s) => s + 1);
-  }
-
-  async function handleClear() {
-    if (!window.confirm("¿Borrar todos los productos?")) return;
-    await save([]);
-    setLastScannedProductId(null);
-    setFocusSignal((s) => s + 1);
+    const toSend = itemsRef.current;
+    if (!toSend.length || isSending) return;
+    setIsSending(true);
+    lastWriteRef.current = Date.now();
+    try {
+      await setFondoCart(toSend, true);
+      setItems([]);
+      itemsRef.current = [];
+      setLastScannedProductId(null);
+    } catch {
+      toast.error("No se pudo enviar. Revisá la conexión y probá de nuevo.");
+    } finally {
+      setIsSending(false);
+      setFocusSignal((s) => s + 1);
+    }
   }
 
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -188,12 +174,10 @@ export function PilotoTabletScreen() {
         lastScannedProductId={lastScannedProductId}
         onAddOne={(productId) => void changeQuantity(productId, 1)}
         onRemoveOne={(productId) => void changeQuantity(productId, -1)}
-        onEdit={handleEdit}
-        editingProductId={editingProductId}
-        onSetEditingProductId={(productId) => {
-          setEditingProductId(productId);
-          if (productId === null) setFocusSignal((s) => s + 1);
-        }}
+        onEdit={async () => false}
+        editingProductId={null}
+        onSetEditingProductId={() => undefined}
+        canEdit={false}
       />
 
       {items.length ? (
@@ -204,11 +188,8 @@ export function PilotoTabletScreen() {
             </span>
             <strong>{formatCurrency(total)}</strong>
           </div>
-          <button type="button" className={sent ? "piloto-tablet__send is-sent" : "piloto-tablet__send"} onClick={() => void handleSend()}>
-            {sent ? "✓ Enviado al mostrador" : "Enviar al mostrador"}
-          </button>
-          <button type="button" className="piloto-tablet__clear" onClick={() => void handleClear()}>
-            Borrar todo
+          <button type="button" className="piloto-tablet__send" disabled={isSending} onClick={() => void handleSend()}>
+            {isSending ? "Enviando…" : "Enviar al mostrador"}
           </button>
         </div>
       ) : null}

@@ -16,6 +16,9 @@ type ScannerCartProps = {
   // cursor vuelve al input").
   editingProductId: number | null;
   onSetEditingProductId: (productId: number | null) => void;
+  // false en la tablet del fondo (30/10/2026, pedido explicito: "el editar
+  // no le pongas"): solo - y +.
+  canEdit?: boolean;
 };
 
 function formatCurrency(amount: number) {
@@ -175,7 +178,8 @@ export function ScannerCart({
   onRemoveOne,
   onEdit,
   editingProductId,
-  onSetEditingProductId
+  onSetEditingProductId,
+  canEdit = true
 }: ScannerCartProps) {
   const editingItem = items.find((item) => item.productId === editingProductId) ?? null;
 
@@ -190,7 +194,7 @@ export function ScannerCart({
           <thead>
             <tr>
               <th>Producto</th>
-              <th className="text-center">Editar</th>
+              {canEdit ? <th className="text-center">Editar</th> : null}
               <th className="text-center">Cant.</th>
               <th className="text-end">Total</th>
               <th className="text-center piloto-cart-table__remove-col">Quitar</th>
@@ -210,11 +214,13 @@ export function ScannerCart({
                       <div className="piloto-price-badge">{formatCurrency(item.price)}</div>
                     </div>
                   </td>
-                  <td className="text-center">
-                    <button type="button" className="piloto-edit-btn" onClick={() => onSetEditingProductId(item.productId)}>
-                      Editar
-                    </button>
-                  </td>
+                  {canEdit ? (
+                    <td className="text-center">
+                      <button type="button" className="piloto-edit-btn" onClick={() => onSetEditingProductId(item.productId)}>
+                        Editar
+                      </button>
+                    </td>
+                  ) : null}
                   <td className="text-center piloto-cart-table__strong">
                     {/* Pedido explicito (25/09/2026): "- 20 +" con botones
                         grandes, para sumar/restar sin apuntar al producto. */}

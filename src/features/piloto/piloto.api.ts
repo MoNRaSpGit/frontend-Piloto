@@ -246,7 +246,9 @@ export async function createTicket(barcode: string, name: string, price: number)
 // Venta del "fondo" (30/10/2026, pedido explicito): la tablet del fondo
 // guarda en el servidor lo que va escaneando; el mostrador la lee y la
 // "toma" a su caja (eso la vacia, en una sola operacion del servidor).
-export type PilotoFondoCart = { items: CartItem[]; sentAt: string | null; updatedAt: string | null };
+// items/sentAt: lo que ve el mostrador (lo enviado si hay, si no lo que la
+// tablet esta pasando). draftItems: lo que la tablet esta pasando ahora.
+export type PilotoFondoCart = { items: CartItem[]; sentAt: string | null; updatedAt: string | null; draftItems: CartItem[] };
 
 export async function getFondoCart(): Promise<PilotoFondoCart> {
   const response = await fetch(`${API_BASE_URL}/piloto/fondo`, { cache: "no-store" });
