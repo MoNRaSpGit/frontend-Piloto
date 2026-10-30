@@ -1,4 +1,4 @@
-type ProTopTab = "productos" | "precios" | "panel" | "clientes" | "imagenes" | "tickets";
+type ProTopTab = "productos" | "precios" | "panel" | "clientes" | "imagenes" | "tickets" | "tablet";
 
 type ProHeaderProps = {
   activeTopTab: ProTopTab;
@@ -62,6 +62,15 @@ export function ProHeader({ activeTopTab, onSelectTab, onTitleClick }: ProHeader
           onClick={() => onSelectTab("clientes")}
         >
           Clientes
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTopTab === "tablet"}
+          className={activeTopTab === "tablet" ? "piloto-pro-nav-tab is-active" : "piloto-pro-nav-tab"}
+          onClick={() => onSelectTab("tablet")}
+        >
+          Tablet
         </button>
         {/* Pestana temporal (24/10/2026, pedido explicito): para confirmar
             visualmente las imagenes migradas a Cloudinary. */}

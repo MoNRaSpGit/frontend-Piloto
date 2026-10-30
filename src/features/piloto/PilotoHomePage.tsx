@@ -9,6 +9,7 @@ import { RegisterTabs } from "./components/RegisterTabs";
 import { ScannerCart } from "./components/ScannerCart";
 import { ScannerCheckout } from "./components/ScannerCheckout";
 import { ScannerInput } from "./components/ScannerInput";
+import { FondoInbox } from "./components/FondoInbox";
 import { ScannerQuickAddModal } from "./components/ScannerQuickAddModal";
 import { SelectClientModal } from "./components/SelectClientModal";
 import { usePilotoCart, type PilotoRegisterId } from "./hooks/usePilotoCart";
@@ -19,10 +20,12 @@ import { ClientesScreen } from "./screens/ClientesScreen";
 import { PilotoDashboardScreen } from "./screens/PilotoDashboardScreen";
 import { PilotoImagesScreen } from "./screens/PilotoImagesScreen";
 import { PilotoPricesScreen } from "./screens/PilotoPricesScreen";
+import { PilotoTabletScreen } from "./screens/PilotoTabletScreen";
 import { PilotoTicketsScreen } from "./screens/PilotoTicketsScreen";
 import { setAppBusy } from "../../shared/state/appActivity";
 
-type PilotoTopTab = "productos" | "precios" | "panel" | "clientes" | "imagenes" | "tickets";
+// "tablet" (30/10/2026): la tablet del fondo, ver PilotoTabletScreen.tsx.
+type PilotoTopTab = "productos" | "precios" | "panel" | "clientes" | "imagenes" | "tickets" | "tablet";
 
 const NOT_FOUND_MESSAGE = "Producto no encontrado.";
 // Ya no se elige medio de pago en la UI (pedido explicito, 16/09/2026:
@@ -88,7 +91,12 @@ export function PilotoHomePage() {
   // solo existe en Pro. En Basico no hay nav para elegirla, pero por las
   // dudas (si se cambia de modo estando parado en Precios) se fuerza a
   // volver a "productos" -- ver el efecto mas abajo.
-  const [activeTopTab, setActiveTopTab] = useState<PilotoTopTab>("productos");
+  // ?tablet en la url (30/10/2026): la tablet del fondo abre directo en su
+  // pestaña, sin tener que tocar nada.
+  const [activeTopTab, setActiveTopTab] = useState<PilotoTopTab>(() =>
+    new URLSearchParams(window.location.search).has("tablet") ? "tablet" : "productos"
+  );
+  const [isFondoOpen, setIsFondoOpen] = useState(false);
   // "Clientes" / "Fiar" (06/10/2026, pedido explicito): pestana propia en
   // la barra de navegacion (arriba a la derecha), siempre visible -- no
   // detras de isPro. Es un valor mas de activeTopTab, no un estado
@@ -109,6 +117,7 @@ export function PilotoHomePage() {
     addProduct,
     addManualItem,
     addManualItemToRegister,
+    addCartItems,
     addOne,
     removeOne,
     updateItem,
@@ -126,10 +135,10 @@ export function PilotoHomePage() {
   // input del escaner, ya sea que cierro un producto, cobro, o hago
   // cualquier otra cosa".
   useEffect(() => {
-    if (!isCheckoutOpen && !quickAddBarcode && manualModalLabel === null && editingProductId === null) {
+    if (!isCheckoutOpen && !quickAddBarcode && manualModalLabel === null && editingProductId === null && !isFondoOpen) {
       setFocusSignal((signal) => signal + 1);
     }
-  }, [isCheckoutOpen, quickAddBarcode, manualModalLabel, editingProductId]);
+  }, [isCheckoutOpen, quickAddBarcode, manualModalLabel, editingProductId, isFondoOpen]);
 
   // Le avisa a AppUpdateNotice si es seguro actualizar solo (pedido
   // explicito, 22/09/2026): "ocupada" = hay algun modal/proceso abierto O
@@ -472,6 +481,15 @@ export function PilotoHomePage() {
             >
               Clientes
             </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTopTab === "tablet"}
+              className={activeTopTab === "tablet" ? "piloto-header-nav-tab is-active" : "piloto-header-nav-tab"}
+              onClick={() => setActiveTopTab("tablet")}
+            >
+              Tablet
+            </button>
           </nav>
         </header>
       )}
@@ -479,7 +497,9 @@ export function PilotoHomePage() {
 
       {/* Pedido explicito: "por defecto, dejar seleccionada Caja 1" (no
           necesariamente la que este activa en ese momento). */}
-      {activeTopTab === "clientes" ? (
+      {activeTopTab === "tablet" ? (
+        <PilotoTabletScreen />
+      ) : activeTopTab === "clientes" ? (
         <ClientesScreen onClose={() => setActiveTopTab("productos")} />
       ) : activeTopTab === "precios" && isPro ? (
         <PilotoPricesScreen registers={registerSummaries} defaultRegisterId={registerSummaries[0]?.id ?? 1} onAddToRegister={addManualItemToRegister} />
@@ -492,6 +512,14 @@ export function PilotoHomePage() {
       ) : (
         <>
           <RegisterTabs registers={visibleRegisterSummaries} activeRegisterId={activeRegisterId} onSelect={handleSelectRegister} />
+
+          {/* Venta del fondo (30/10/2026): cartel flotante cuando la tablet
+              del fondo tiene productos; se pasan a la caja activa. */}
+          <FondoInbox
+            targetLabel={isPro ? `Caja ${activeRegisterId}` : "mi caja"}
+            onTake={addCartItems}
+            onOpenChange={setIsFondoOpen}
+          />
 
           <ScannerInput
             value={barcodeInput}

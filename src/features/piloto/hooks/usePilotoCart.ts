@@ -99,6 +99,23 @@ export function usePilotoCart(registerIds: PilotoRegisterId[] = DEFAULT_PILOTO_R
     }));
   }
 
+  // Venta del "fondo" (30/10/2026): suma a la caja ACTIVA los productos que
+  // se escanearon en la tablet del fondo. Si un producto ya estaba en la
+  // caja, se suman las cantidades.
+  function addCartItems(items: CartItem[]) {
+    if (!items.length) return;
+    updateActiveRegister((state) => {
+      let nextCartItems = state.cartItems;
+      for (const incoming of items) {
+        const existing = nextCartItems.find((item) => item.productId === incoming.productId);
+        nextCartItems = existing
+          ? nextCartItems.map((item) => (item.productId === incoming.productId ? { ...item, quantity: item.quantity + incoming.quantity } : item))
+          : [incoming, ...nextCartItems];
+      }
+      return { cartItems: nextCartItems, lastScannedProductId: items[0].productId };
+    });
+  }
+
   function addOne(productId: number) {
     updateActiveRegister((state) => ({
       cartItems: state.cartItems.map((item) => (item.productId === productId ? { ...item, quantity: item.quantity + 1 } : item)),
@@ -141,6 +158,7 @@ export function usePilotoCart(registerIds: PilotoRegisterId[] = DEFAULT_PILOTO_R
     addProduct,
     addManualItem,
     addManualItemToRegister,
+    addCartItems,
     addOne,
     removeOne,
     updateItem,

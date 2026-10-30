@@ -242,3 +242,27 @@ export async function createTicket(barcode: string, name: string, price: number)
   const raw = await readJson<RawProductResponse>(response);
   return { item: mapProduct(raw.item) };
 }
+
+// Venta del "fondo" (30/10/2026, pedido explicito): la tablet del fondo
+// guarda en el servidor lo que va escaneando; el mostrador la lee y la
+// "toma" a su caja (eso la vacia, en una sola operacion del servidor).
+export type PilotoFondoCart = { items: CartItem[]; sentAt: string | null; updatedAt: string | null };
+
+export async function getFondoCart(): Promise<PilotoFondoCart> {
+  const response = await fetch(`${API_BASE_URL}/piloto/fondo`, { cache: "no-store" });
+  return readJson<PilotoFondoCart>(response);
+}
+
+export async function setFondoCart(items: CartItem[], sent = false): Promise<PilotoFondoCart> {
+  const response = await fetch(`${API_BASE_URL}/piloto/fondo`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ items, sent })
+  });
+  return readJson<PilotoFondoCart>(response);
+}
+
+export async function takeFondoCart(): Promise<PilotoFondoCart> {
+  const response = await fetch(`${API_BASE_URL}/piloto/fondo/take`, { method: "POST" });
+  return readJson<PilotoFondoCart>(response);
+}
