@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import { findProductByBarcode, getFondoCart, setFondoCart } from "../piloto.api";
+import { findProductByBarcode, getFondoCart, setFondoCart, updateProduct } from "../piloto.api";
 import type { CartItem } from "../piloto.types";
 import { ManualProductModal } from "../components/ManualProductModal";
+import { ScannerCart } from "../components/ScannerCart";
 import { ScannerInput } from "../components/ScannerInput";
 
 // Pestaña "Tablet" (30/10/2026, pedido explicito): la tablet del FONDO del
@@ -10,8 +11,10 @@ import { ScannerInput } from "../components/ScannerInput";
 // caja: se guarda en el servidor como "la venta del fondo", y el mostrador
 // la ve y la toma a su caja cuando quiere (ver FondoInbox.tsx). Asi no se
 // mezclan los productos de dos clientes que se atienden al mismo tiempo.
-// Pensada para una persona mayor: letra grande, un solo boton importante, y
-// "Enviar" es opcional (el mostrador puede tomarla igual sin que se envie).
+// Pensada para una persona mayor: solo el escaner y "Producto manual"; la
+// lista (la MISMA del mostrador, con - + y Editar), el total y "Enviar"
+// aparecen cuando hay algo escaneado. Sin carteles de aviso (pedido
+// explicito: "sacale todos los otros datos").
 
 const POLL_MS = 3000;
 // Despues de guardar, se ignora un ratito lo que diga el servidor para no
@@ -29,8 +32,9 @@ export function PilotoTabletScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [focusSignal, setFocusSignal] = useState(0);
-  const [notice, setNotice] = useState("");
   const [isManualOpen, setIsManualOpen] = useState(false);
+  const [lastScannedProductId, setLastScannedProductId] = useState<number | null>(null);
+  const [editingProductId, setEditingProductId] = useState<number | null>(null);
   const lastWriteRef = useRef(0);
   const itemsRef = useRef<CartItem[]>([]);
   itemsRef.current = items;
@@ -62,7 +66,8 @@ export function PilotoTabletScreen() {
         } else if (cart.items.length === 0 && itemsRef.current.length > 0) {
           setItems([]);
           setSent(false);
-          setNotice("✓ El mostrador ya tomó la venta. Podés empezar otra.");
+          setLastScannedProductId(null);
+          setEditingProductId(null);
           setFocusSignal((s) => s + 1);
         }
       } catch {
@@ -80,7 +85,6 @@ export function PilotoTabletScreen() {
   async function handleScan(code: string) {
     setIsLoading(true);
     setError("");
-    setNotice("");
     try {
       const { item: product } = await findProductByBarcode(code);
       const current = itemsRef.current;
@@ -88,6 +92,7 @@ export function PilotoTabletScreen() {
       const next = existing
         ? [{ ...existing, quantity: existing.quantity + 1 }, ...current.filter((item) => item.productId !== product.id)]
         : [{ productId: product.id, name: product.name, price: product.price, quantity: 1, imageUrl: product.imageUrl }, ...current];
+      setLastScannedProductId(product.id);
       await save(next);
     } catch (scanError) {
       const notFound = scanError instanceof Error && scanError.message === "Producto no encontrado.";
@@ -105,31 +110,47 @@ export function PilotoTabletScreen() {
   // en el mostrador (esos cuentan -1, -2, ...).
   async function handleManualConfirm(price: number) {
     setIsManualOpen(false);
-    setNotice("");
     const manual: CartItem = { productId: -(Date.now() % 1_000_000_000), name: "Producto Manual", price, quantity: 1, imageUrl: null };
+    setLastScannedProductId(manual.productId);
     await save([manual, ...itemsRef.current]);
     setFocusSignal((s) => s + 1);
   }
 
-  async function removeOne(productId: number) {
+  async function changeQuantity(productId: number, delta: number) {
     const next = itemsRef.current
-      .map((item) => (item.productId === productId ? { ...item, quantity: item.quantity - 1 } : item))
+      .map((item) => (item.productId === productId ? { ...item, quantity: item.quantity + delta } : item))
       .filter((item) => item.quantity > 0);
     await save(next);
     setFocusSignal((s) => s + 1);
   }
 
+  // Editar: mismo criterio que el mostrador (PilotoHomePage
+  // handleEditCartItem) -- los productos reales se corrigen tambien en el
+  // catalogo; los manuales (id negativo) solo en esta lista.
+  async function handleEdit(productId: number, changes: { name: string; price: number }) {
+    if (productId > 0) {
+      try {
+        await updateProduct(productId, changes.name, changes.price);
+        toast.success("Producto actualizado.");
+      } catch (updateError) {
+        toast.error(updateError instanceof Error ? updateError.message : "No se pudo guardar el producto.");
+        return false;
+      }
+    }
+    await save(itemsRef.current.map((item) => (item.productId === productId ? { ...item, ...changes } : item)));
+    return true;
+  }
+
   async function handleSend() {
     if (!itemsRef.current.length) return;
     await save(itemsRef.current, true);
-    setNotice("✓ Enviado. El mostrador lo va a cobrar.");
     setFocusSignal((s) => s + 1);
   }
 
   async function handleClear() {
-    if (!window.confirm("¿Borrar todos los productos del fondo?")) return;
+    if (!window.confirm("¿Borrar todos los productos?")) return;
     await save([]);
-    setNotice("");
+    setLastScannedProductId(null);
     setFocusSignal((s) => s + 1);
   }
 
@@ -138,9 +159,6 @@ export function PilotoTabletScreen() {
 
   return (
     <section className="piloto-tablet">
-      {/* Bien limpia (30/10/2026, pedido explicito): sin titulos ni carteles
-          de "no hay productos"; la lista, el total y "Enviar" aparecen solo
-          cuando hay algo escaneado. */}
       <ScannerInput
         value={barcode}
         onChange={setBarcode}
@@ -165,22 +183,18 @@ export function PilotoTabletScreen() {
         />
       ) : null}
 
-      {notice ? <p className="piloto-tablet__notice">{notice}</p> : null}
-
-      {items.length ? (
-        <ul className="piloto-tablet__list">
-          {items.map((item) => (
-            <li key={item.productId}>
-              <span className="piloto-tablet__qty">{item.quantity}×</span>
-              <span className="piloto-tablet__name">{item.name}</span>
-              <span className="piloto-tablet__price">{formatCurrency(item.price * item.quantity)}</span>
-              <button type="button" className="piloto-tablet__minus" onClick={() => void removeOne(item.productId)} aria-label={`Quitar uno de ${item.name}`}>
-                −
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : null}
+      <ScannerCart
+        items={items}
+        lastScannedProductId={lastScannedProductId}
+        onAddOne={(productId) => void changeQuantity(productId, 1)}
+        onRemoveOne={(productId) => void changeQuantity(productId, -1)}
+        onEdit={handleEdit}
+        editingProductId={editingProductId}
+        onSetEditingProductId={(productId) => {
+          setEditingProductId(productId);
+          if (productId === null) setFocusSignal((s) => s + 1);
+        }}
+      />
 
       {items.length ? (
         <div className="piloto-tablet__footer">
