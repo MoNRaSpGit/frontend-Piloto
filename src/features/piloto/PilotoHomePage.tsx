@@ -371,16 +371,19 @@ export function PilotoHomePage() {
       clearCart();
       toast.success("Venta confirmada.");
 
-      // Impresion por QZ Tray (22/09/2026, pedido explicito; ahora
-      // ademas Pro-only, 23/09/2026: "en Basico no intenta imprimir"):
-      // "si hay impresora imprime y listo, si no hay no imprime
-      // claramente pero no tranca la venta ni nada de eso". La venta ya
-      // quedo confirmada y el carrito ya se vacio arriba -- esto se
-      // dispara SIN esperar (sin await) para que el modal de cobro se
-      // cierre al toque, sin quedar colgado mientras QZ Tray intenta
-      // conectar (puede tardar si esta cerrado o no hay impresora). El
-      // error, si lo hay, se avisa cuando llegue, aparte.
-      if (isPro || shouldPrint) {
+      // Impresion por QZ Tray (22/09/2026, pedido explicito): "si hay
+      // impresora imprime y listo, si no hay no imprime claramente pero
+      // no tranca la venta ni nada de eso". La venta ya quedo confirmada
+      // y el carrito ya se vacio arriba -- esto se dispara SIN esperar
+      // (sin await) para que el modal de cobro se cierre al toque, sin
+      // quedar colgado mientras QZ Tray intenta conectar (puede tardar
+      // si esta cerrado o no hay impresora). El error, si lo hay, se
+      // avisa cuando llegue, aparte.
+      //
+      // Pro ya NO imprime directo (pedido explicito, 01/11/2026): antes
+      // imprimia siempre sin preguntar ("isPro ||..."); ahora pregunta
+      // igual que Basico, con el boton "Confirmar e imprimir" aparte.
+      if (shouldPrint) {
         void printSaleTicketByQz({
           externalId: `piloto-${Date.now()}`,
           chargedAtIso: new Date().toISOString(),
@@ -579,7 +582,7 @@ export function PilotoHomePage() {
                 onOpen={() => setIsCheckoutOpen(true)}
                 onClose={() => setIsCheckoutOpen(false)}
                 onCharge={handleCharge}
-                canPrint={!isPro}
+                canPrint
                 onFiar={() => void handleOpenFiar()}
               />
             </>
