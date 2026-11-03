@@ -146,6 +146,7 @@ export function PilotoHomePage() {
     addOne,
     removeOne,
     updateItem,
+    resolveUnknownItem,
     clearCart,
     total,
     activeRegisterId,
@@ -310,6 +311,24 @@ export function PilotoHomePage() {
   }
 
   async function handleEditCartItem(productId: number, changes: { name: string; price: number }) {
+    // "Producto no encontrado" desde la tablet del fondo (03/11/2026,
+    // pedido explicito: "lo paso de vuelta y me muestra como producto no
+    // encontrado"): editarla tiene que crear el producto de verdad con
+    // ese codigo -- si solo se renombra el renglon, la tablet nunca lo
+    // reconoce la proxima vez.
+    const pendingBarcode = cartItems.find((item) => item.productId === productId)?.pendingBarcode;
+    if (pendingBarcode) {
+      try {
+        const response = await createProduct(pendingBarcode, changes.name, changes.price);
+        resolveUnknownItem(productId, response.item);
+        toast.success("Producto creado y cargado.");
+        return true;
+      } catch (createError) {
+        toast.error(createError instanceof Error ? createError.message : "No se pudo guardar el producto.");
+        return false;
+      }
+    }
+
     // Ids negativos son lineas manuales locales (sin producto real en el
     // catalogo): solo se actualiza el carrito, no hay nada que guardar en la BD.
     if (productId <= 0) {

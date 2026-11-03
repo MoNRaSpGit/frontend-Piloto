@@ -139,6 +139,23 @@ export function usePilotoCart(registerIds: PilotoRegisterId[] = DEFAULT_PILOTO_R
     }));
   }
 
+  // "Producto no encontrado" (03/11/2026, pedido explicito: "lo paso de
+  // vuelta y me muestra como producto no encontrado"): editarla no era
+  // suficiente -- solo renombraba el renglon, nunca creaba el producto
+  // de verdad, asi que la tablet seguia sin reconocer ese codigo. Esto
+  // reemplaza la linea sintetica por el producto real recien creado
+  // (mismo id que ya quedo en el catalogo), conservando la cantidad.
+  function resolveUnknownItem(oldProductId: number, product: PilotoProduct) {
+    updateActiveRegister((state) => ({
+      ...state,
+      cartItems: state.cartItems.map((item) =>
+        item.productId === oldProductId
+          ? { productId: product.id, name: product.name, price: product.price, quantity: item.quantity, imageUrl: product.imageUrl }
+          : item
+      )
+    }));
+  }
+
   // Solo vacia la caja ACTIVA (pedido explicito: "cobro y confirmo Caja 1,
   // Caja 1 queda vacia, Caja 2 sigue teniendo sus productos intactos").
   function clearCart() {
@@ -162,6 +179,7 @@ export function usePilotoCart(registerIds: PilotoRegisterId[] = DEFAULT_PILOTO_R
     addOne,
     removeOne,
     updateItem,
+    resolveUnknownItem,
     clearCart,
     total,
     activeRegisterId,

@@ -28,6 +28,12 @@ export type CartItem = {
   price: number;
   quantity: number;
   imageUrl: string | null;
+  // "Producto no encontrado" desde la tablet del fondo (03/11/2026): el
+  // codigo que no estaba en el catalogo. Al editar esta linea en el
+  // mostrador, en vez de solo renombrar el renglon, se crea el producto
+  // de verdad con este codigo -- asi la proxima vez que se escanee, ya
+  // se reconoce.
+  pendingBarcode?: string | null;
 };
 
 // "Precios" -- Modo Pro (23/09/2026): lista de precios por categoria,

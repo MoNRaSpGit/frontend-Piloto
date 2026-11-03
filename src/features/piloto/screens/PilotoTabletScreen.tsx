@@ -104,7 +104,8 @@ export function PilotoTabletScreen() {
           name: "Producto no encontrado",
           price: 0,
           quantity: 1,
-          imageUrl: null
+          imageUrl: null,
+          pendingBarcode: code
         };
         setLastScannedProductId(unknown.productId);
         await save([unknown, ...itemsRef.current]);
