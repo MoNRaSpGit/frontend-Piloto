@@ -68,6 +68,22 @@ const QUICK_MANUAL_BUTTONS: { label: string; icon: ReactNode }[] = [
 // primer toque), despues los 4 botones de arriba, y vuelve a empezar.
 const ARROW_CYCLE_LABELS = ["Producto Manual", ...QUICK_MANUAL_BUTTONS.map((button) => button.label)];
 
+// Pedido explicito (03/11/2026): "si pongo tablet y refresco, que quede
+// en la tablet de vuelta" -- se guarda la pestana elegida y se restaura
+// al cargar la pagina (el guard de Pro/Basico de mas abajo ya se encarga
+// de corregirla si quedo guardada una pestana que ya no es valida).
+const ACTIVE_TAB_STORAGE_KEY = "piloto-active-top-tab";
+const VALID_TOP_TABS: PilotoTopTab[] = ["productos", "precios", "panel", "clientes", "imagenes", "tickets", "tablet"];
+
+function loadStoredTopTab(): PilotoTopTab | null {
+  try {
+    const stored = window.localStorage.getItem(ACTIVE_TAB_STORAGE_KEY);
+    return VALID_TOP_TABS.includes(stored as PilotoTopTab) ? (stored as PilotoTopTab) : null;
+  } catch {
+    return null;
+  }
+}
+
 export function PilotoHomePage() {
   const [barcodeInput, setBarcodeInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -94,7 +110,17 @@ export function PilotoHomePage() {
   // ?tablet en la url (30/10/2026): la tablet del fondo abre directo en su
   // pestaña, sin tener que tocar nada.
   const [isTabletOnly] = useState(() => new URLSearchParams(window.location.search).has("tablet"));
-  const [activeTopTab, setActiveTopTab] = useState<PilotoTopTab>(isTabletOnly ? "tablet" : "productos");
+  const [activeTopTab, setActiveTopTab] = useState<PilotoTopTab>(
+    () => (isTabletOnly ? "tablet" : loadStoredTopTab()) ?? "productos"
+  );
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(ACTIVE_TAB_STORAGE_KEY, activeTopTab);
+    } catch {
+      // ignore
+    }
+  }, [activeTopTab]);
   const [isFondoOpen, setIsFondoOpen] = useState(false);
   // "Clientes" / "Fiar" (06/10/2026, pedido explicito): pestana propia en
   // la barra de navegacion (arriba a la derecha), siempre visible -- no
@@ -478,8 +504,8 @@ export function PilotoHomePage() {
             <button
               type="button"
               role="tab"
-              aria-selected={activeTopTab !== "clientes"}
-              className={activeTopTab !== "clientes" ? "piloto-header-nav-tab is-active" : "piloto-header-nav-tab"}
+              aria-selected={activeTopTab === "productos"}
+              className={activeTopTab === "productos" ? "piloto-header-nav-tab is-active" : "piloto-header-nav-tab"}
               onClick={() => setActiveTopTab("productos")}
             >
               Productos
