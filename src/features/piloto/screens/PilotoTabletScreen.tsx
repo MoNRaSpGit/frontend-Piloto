@@ -162,6 +162,7 @@ export function PilotoTabletScreen() {
 
       {isManualOpen ? (
         <ManualProductModal
+          numericKeyboard
           onClose={() => {
             setIsManualOpen(false);
             setFocusSignal((s) => s + 1);

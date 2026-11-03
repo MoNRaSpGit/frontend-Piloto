@@ -9,11 +9,17 @@ type ManualProductModalProps = {
   // boton original "Producto Manual" no pasa `title`, asi que se comporta
   // identico a como era antes.
   title?: string;
+  // Tablet del fondo (03/11/2026, pedido explicito): ahi SI se quiere
+  // teclado numerico (el mostrador no). inputMode="numeric" + type="text"
+  // (nunca type="tel") abre el numerico simple de 0 a 9 -- "tel" abre el
+  // de discado de telefono, con +/*/#, que es lo que se habia quejado de
+  // que parecia "una calculadora cientifica".
+  numericKeyboard?: boolean;
   onClose: () => void;
   onConfirm: (price: number) => void;
 };
 
-export function ManualProductModal({ title = "Producto Manual", onClose, onConfirm }: ManualProductModalProps) {
+export function ManualProductModal({ title = "Producto Manual", numericKeyboard = false, onClose, onConfirm }: ManualProductModalProps) {
   const [priceInput, setPriceInput] = useState("");
   const [error, setError] = useState("");
   const priceInputRef = useRef<HTMLInputElement>(null);
@@ -58,10 +64,8 @@ export function ManualProductModal({ title = "Producto Manual", onClose, onConfi
               ref={priceInputRef}
               value={priceInput}
               onChange={(event) => setPriceInput(sanitizePriceInput(event.target.value))}
-              // Teclado estandar (03/11/2026, pedido explicito: revierte el
-              // teclado numerico de tablet del 30/10/2026 -- no era el que
-              // queria).
               type="text"
+              inputMode={numericKeyboard ? "numeric" : undefined}
               placeholder="Ej: 150"
             />
           </label>
