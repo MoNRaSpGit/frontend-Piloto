@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import { findProductByBarcode, getFondoState, reportFondoUnknownBarcode, setFondoCart } from "../piloto.api";
+import { findProductByBarcode, getFondoState, setFondoCart } from "../piloto.api";
 import type { CartItem } from "../piloto.types";
 import { ManualProductModal } from "../components/ManualProductModal";
 import { ScannerCart } from "../components/ScannerCart";
@@ -93,11 +93,21 @@ export function PilotoTabletScreen() {
     } catch (scanError) {
       const notFound = scanError instanceof Error && scanError.message === "Producto no encontrado.";
       if (notFound) {
-        // No se traba esperando que el mostrador lo resuelva (03/11/2026,
-        // pedido explicito: "ella sigue ahi") -- solo le avisa al servidor
-        // y sigue escaneando lo que venga despues.
-        setError("Ese producto no está cargado. Avisado al mostrador, podés seguir.");
-        void reportFondoUnknownBarcode(code);
+        // No hay cartel ni se traba (03/11/2026, pedido explicito: "que a
+        // la tablet no le diga producto no encontrado o cosas así"): se
+        // agrega a la lista como una linea mas, igual que "Producto
+        // Manual" (id negativo del reloj, nunca choca). El mostrador la
+        // ve llegar como cualquier otra y la edita ahi -- nombre y precio
+        // reales -- cuando quiera.
+        const unknown: CartItem = {
+          productId: -(Date.now() % 1_000_000_000),
+          name: "Producto no encontrado",
+          price: 0,
+          quantity: 1,
+          imageUrl: null
+        };
+        setLastScannedProductId(unknown.productId);
+        await save([unknown, ...itemsRef.current]);
       } else {
         setError("No se pudo leer el producto.");
       }

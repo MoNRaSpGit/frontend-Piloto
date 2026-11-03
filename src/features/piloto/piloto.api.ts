@@ -255,9 +255,6 @@ export type PilotoFondoState = {
   // "Tomar y seguir recibiendo" (03/11/2026): si esta reclamado, lo nuevo
   // que escanee la tablet se va sumando solo a la caja que lo reclamo.
   draftClaimed: boolean;
-  // Codigo escaneado en la tablet que no existe en el catalogo, esperando
-  // que el mostrador lo cargue.
-  pendingUnknownBarcode: string | null;
 };
 
 export async function getFondoState(): Promise<PilotoFondoState> {
@@ -277,22 +274,6 @@ export async function syncFondoDraft(claim = false): Promise<{ items: CartItem[]
     body: JSON.stringify({ claim })
   });
   return readJson<{ items: CartItem[]; closed: boolean }>(response);
-}
-
-export async function reportFondoUnknownBarcode(barcode: string): Promise<void> {
-  await fetch(`${API_BASE_URL}/piloto/fondo/unknown-barcode`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ barcode })
-  });
-}
-
-export async function resolveFondoUnknownBarcode(barcode: string): Promise<void> {
-  await fetch(`${API_BASE_URL}/piloto/fondo/unknown-barcode/resolve`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ barcode })
-  });
 }
 
 // sent = true: "Enviar al mostrador" (arma un pedido nuevo y vacia la tablet).

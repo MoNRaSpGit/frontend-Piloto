@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import { getFondoState, resolveFondoUnknownBarcode, syncFondoDraft, takeFondoOrder, type PilotoFondoState } from "../piloto.api";
+import { getFondoState, syncFondoDraft, takeFondoOrder, type PilotoFondoState } from "../piloto.api";
 import type { CartItem } from "../piloto.types";
-import { ScannerQuickAddModal } from "./ScannerQuickAddModal";
 
 // Bandeja del "fondo" en el mostrador (30/10/2026, pedido explicito): cada
 // "Enviar" de la tablet llega como un PEDIDO aparte, y se apilan en orden
@@ -15,6 +14,11 @@ import { ScannerQuickAddModal } from "./ScannerQuickAddModal";
 // una sola vez -- se reclama, y de ahi en mas cada producto nuevo que
 // escanee la tablet se va sumando solo, sin tener que volver a tocar
 // nada, hasta que la tablet aprieta "Enviar" (eso cierra ese pedido).
+//
+// Un codigo que la tablet escanea sin encontrarlo en el catalogo llega
+// como una linea mas, "Producto no encontrado" (ver PilotoTabletScreen.tsx)
+// -- no hay nada especial que hacer aca, se edita como cualquier otra
+// linea manual una vez que llego a la caja.
 const POLL_MS = 2500;
 const DRAFT = "draft" as const;
 
@@ -32,26 +36,16 @@ type FondoInboxProps = {
   targetLabel: string;
   onTake: (items: CartItem[]) => void;
   onOpenChange: (open: boolean) => void;
-  // Producto escaneado en la tablet que no existe en el catalogo: se crea
-  // y se agrega a la caja activa, igual que el alta rapida del mostrador.
-  onResolveUnknownProduct: (barcode: string, name: string, price: number) => Promise<boolean>;
 };
 
-const EMPTY_STATE: PilotoFondoState = { orders: [], draftItems: [], draftClaimed: false, pendingUnknownBarcode: null };
+const EMPTY_STATE: PilotoFondoState = { orders: [], draftItems: [], draftClaimed: false };
 
-export function FondoInbox({ targetLabel, onTake, onOpenChange, onResolveUnknownProduct }: FondoInboxProps) {
+export function FondoInbox({ targetLabel, onTake, onOpenChange }: FondoInboxProps) {
   const [state, setState] = useState<PilotoFondoState>(EMPTY_STATE);
   // id del pedido abierto, "draft" = lo que la tablet esta pasando, null = cerrado.
   const [openId, setOpenId] = useState<number | typeof DRAFT | null>(null);
   const [isTaking, setIsTaking] = useState(false);
   const seenOrdersRef = useRef<Set<number> | null>(null);
-
-  // El aviso de "producto no registrado" tambien es un modal -- el
-  // mostrador tiene que poder escribir ahi sin que el reenfoque
-  // automatico del escaner se lo pise.
-  useEffect(() => {
-    onOpenChange(openId !== null || state.pendingUnknownBarcode !== null);
-  }, [openId, state.pendingUnknownBarcode, onOpenChange]);
 
   useEffect(() => {
     let cancelled = false;
@@ -88,30 +82,9 @@ export function FondoInbox({ targetLabel, onTake, onOpenChange, onResolveUnknown
     };
   }, [onTake]);
 
-  // Codigo escaneado en la tablet que no existe en el catalogo: se carga
-  // igual que el alta rapida del mostrador, y despues se avisa al
-  // servidor que ya se resolvio (compara y limpia, no pisa un aviso
-  // distinto que haya llegado mientras tanto).
-  async function handleResolveUnknown(name: string, price: number) {
-    const barcode = state.pendingUnknownBarcode;
-    if (!barcode) return false;
-    const ok = await onResolveUnknownProduct(barcode, name, price);
-    if (ok) {
-      await resolveFondoUnknownBarcode(barcode);
-      setState((prev) => (prev.pendingUnknownBarcode === barcode ? { ...prev, pendingUnknownBarcode: null } : prev));
-    }
-    return ok;
-  }
-
-  function handleDismissUnknown() {
-    const barcode = state.pendingUnknownBarcode;
-    if (!barcode) return;
-    void resolveFondoUnknownBarcode(barcode);
-    setState((prev) => (prev.pendingUnknownBarcode === barcode ? { ...prev, pendingUnknownBarcode: null } : prev));
-  }
-
   function setOpen(next: number | typeof DRAFT | null) {
     setOpenId(next);
+    onOpenChange(next !== null);
   }
 
   const openOrder = typeof openId === "number" ? state.orders.find((o) => o.id === openId) ?? null : null;
@@ -204,16 +177,6 @@ export function FondoInbox({ targetLabel, onTake, onOpenChange, onResolveUnknown
           </div>
         </div>
       </div>
-    );
-  }
-
-  if (state.pendingUnknownBarcode) {
-    return (
-      <ScannerQuickAddModal
-        barcode={state.pendingUnknownBarcode}
-        onClose={handleDismissUnknown}
-        onConfirm={handleResolveUnknown}
-      />
     );
   }
 
