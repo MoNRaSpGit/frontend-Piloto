@@ -309,6 +309,21 @@ export function PilotoHomePage() {
     }
   }
 
+  // Producto escaneado en la tablet del fondo que no existe en el
+  // catalogo (03/11/2026, pedido explicito): mismo alta rapida que ya
+  // existe para el escaner del mostrador, pero disparada desde el aviso
+  // de FondoInbox -- se crea y se agrega a la caja activa.
+  async function handleResolveFondoUnknownProduct(barcode: string, name: string, price: number) {
+    try {
+      const response = await createProduct(barcode, name, price);
+      addProduct(response.item);
+      return true;
+    } catch (createError) {
+      toast.error(createError instanceof Error ? createError.message : "No se pudo guardar el producto.");
+      return false;
+    }
+  }
+
   async function handleEditCartItem(productId: number, changes: { name: string; price: number }) {
     // Ids negativos son lineas manuales locales (sin producto real en el
     // catalogo): solo se actualiza el carrito, no hay nada que guardar en la BD.
@@ -557,6 +572,7 @@ export function PilotoHomePage() {
             targetLabel={isPro ? `Caja ${activeRegisterId}` : "mi caja"}
             onTake={addCartItems}
             onOpenChange={setIsFondoOpen}
+            onResolveUnknownProduct={handleResolveFondoUnknownProduct}
           />
 
           <ScannerInput

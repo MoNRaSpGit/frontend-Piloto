@@ -1751,6 +1751,14 @@ input {
   animation: piloto-fondo-pulse 1.2s ease-in-out infinite;
 }
 
+/* "Tomar y seguir recibiendo" (03/11/2026): chip informativo, no es un
+   boton -- mientras el borrador esta reclamado no hay nada para tomar,
+   los productos nuevos se suman solos. */
+.piloto-fondo-pill--live {
+  background: #7f1d1d;
+  cursor: default;
+}
+
 @keyframes piloto-fondo-pulse {
   0%, 100% { box-shadow: 0 12px 28px rgba(21, 128, 61, 0.35), 0 0 0 0 rgba(34, 197, 94, 0.55); }
   50% { box-shadow: 0 12px 28px rgba(21, 128, 61, 0.35), 0 0 0 10px rgba(34, 197, 94, 0); }

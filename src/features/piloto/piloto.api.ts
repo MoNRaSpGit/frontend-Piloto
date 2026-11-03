@@ -249,11 +249,50 @@ export async function createTicket(barcode: string, name: string, price: number)
 // Cada "Enviar" de la tablet es un pedido aparte (Pedido 1, 2, 3... en orden
 // de llegada). draftItems: lo que la tablet esta pasando ahora, sin enviar.
 export type PilotoFondoOrder = { id: number; number: number; items: CartItem[]; sentAt: string | null };
-export type PilotoFondoState = { orders: PilotoFondoOrder[]; draftItems: CartItem[] };
+export type PilotoFondoState = {
+  orders: PilotoFondoOrder[];
+  draftItems: CartItem[];
+  // "Tomar y seguir recibiendo" (03/11/2026): si esta reclamado, lo nuevo
+  // que escanee la tablet se va sumando solo a la caja que lo reclamo.
+  draftClaimed: boolean;
+  // Codigo escaneado en la tablet que no existe en el catalogo, esperando
+  // que el mostrador lo cargue.
+  pendingUnknownBarcode: string | null;
+};
 
 export async function getFondoState(): Promise<PilotoFondoState> {
   const response = await fetch(`${API_BASE_URL}/piloto/fondo`, { cache: "no-store" });
   return readJson<PilotoFondoState>(response);
+}
+
+// claim=true: primer "Tomar y seguir recibiendo" -- reclama el borrador y
+// devuelve lo que haya hasta el momento. Sin claim: sincronizacion de
+// rutina, devuelve solo lo nuevo desde la ultima vez. closed=true: la
+// tablet ya habia apretado Enviar y esta sync termino de entregar todo
+// (el borrador quedo vacio y liberado del otro lado).
+export async function syncFondoDraft(claim = false): Promise<{ items: CartItem[]; closed: boolean }> {
+  const response = await fetch(`${API_BASE_URL}/piloto/fondo/sync`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ claim })
+  });
+  return readJson<{ items: CartItem[]; closed: boolean }>(response);
+}
+
+export async function reportFondoUnknownBarcode(barcode: string): Promise<void> {
+  await fetch(`${API_BASE_URL}/piloto/fondo/unknown-barcode`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ barcode })
+  });
+}
+
+export async function resolveFondoUnknownBarcode(barcode: string): Promise<void> {
+  await fetch(`${API_BASE_URL}/piloto/fondo/unknown-barcode/resolve`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ barcode })
+  });
 }
 
 // sent = true: "Enviar al mostrador" (arma un pedido nuevo y vacia la tablet).

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import { findProductByBarcode, getFondoState, setFondoCart } from "../piloto.api";
+import { findProductByBarcode, getFondoState, reportFondoUnknownBarcode, setFondoCart } from "../piloto.api";
 import type { CartItem } from "../piloto.types";
 import { ManualProductModal } from "../components/ManualProductModal";
 import { ScannerCart } from "../components/ScannerCart";
@@ -92,7 +92,15 @@ export function PilotoTabletScreen() {
       await save(next);
     } catch (scanError) {
       const notFound = scanError instanceof Error && scanError.message === "Producto no encontrado.";
-      setError(notFound ? "Ese producto no está cargado. Pasalo en el mostrador." : "No se pudo leer el producto.");
+      if (notFound) {
+        // No se traba esperando que el mostrador lo resuelva (03/11/2026,
+        // pedido explicito: "ella sigue ahi") -- solo le avisa al servidor
+        // y sigue escaneando lo que venga despues.
+        setError("Ese producto no está cargado. Avisado al mostrador, podés seguir.");
+        void reportFondoUnknownBarcode(code);
+      } else {
+        setError("No se pudo leer el producto.");
+      }
     } finally {
       setBarcode("");
       setIsLoading(false);
