@@ -32,7 +32,10 @@ export function AppUpdateNotice() {
           return;
         }
 
-        setShow(updateAvailable);
+        // Actualizacion silenciosa (06/11/2026, pedido explicito): si la app
+        // esta en uso NO se muestra ningun cartel -- se espera a que quede
+        // tranquila y ahi se actualiza sola (se vuelve a chequear cada 2 min).
+        setShow(false);
       } catch {
         if (mounted) {
           setShow(false);

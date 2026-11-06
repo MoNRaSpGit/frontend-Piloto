@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import { getFondoState, syncFondoDraft, takeFondoOrder, type PilotoFondoState } from "../piloto.api";
+import { getFondoState, takeFondoOrder, type PilotoFondoOrder } from "../piloto.api";
 import type { CartItem } from "../piloto.types";
 
 // Bandeja del "fondo" en el mostrador (30/10/2026, pedido explicito): cada
@@ -8,19 +8,17 @@ import type { CartItem } from "../piloto.types";
 // abajo a la izquierda ("pedido 1, pedido 2, pedido 3... no sumes todos los
 // pedidos"). Se toca uno y se pasa a la caja cuando se quiera.
 //
-// "Tomar y seguir recibiendo" (03/11/2026, pedido explicito: "si yo quiero
-// me lo robo... y si ella sigue pasando, me sigue sumando en el mio"): el
-// borrador (lo que la tablet esta pasando, sin enviar) ya no se toma de
-// una sola vez -- se reclama, y de ahi en mas cada producto nuevo que
-// escanee la tablet se va sumando solo, sin tener que volver a tocar
-// nada, hasta que la tablet aprieta "Enviar" (eso cierra ese pedido).
+// "Tomar y seguir recibiendo" (03/11/2026) se SACO el 06/11/2026, pedido
+// explicito: "que no se pueda robar el pedido... solo cuando le de enviar,
+// ahi se queda con el pedido". Le generaba problemas al local. Ahora lo que
+// la tablet esta pasando (sin enviar) NO se ve ni se puede tomar desde el
+// mostrador: solo aparecen los pedidos ya enviados.
 //
 // Un codigo que la tablet escanea sin encontrarlo en el catalogo llega
 // como una linea mas, "Producto no encontrado" (ver PilotoTabletScreen.tsx)
 // -- no hay nada especial que hacer aca, se edita como cualquier otra
 // linea manual una vez que llego a la caja.
 const POLL_MS = 2500;
-const DRAFT = "draft" as const;
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat("es-UY", { style: "currency", currency: "UYU", maximumFractionDigits: 0 }).format(amount);
@@ -38,12 +36,10 @@ type FondoInboxProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-const EMPTY_STATE: PilotoFondoState = { orders: [], draftItems: [], draftClaimed: false };
-
 export function FondoInbox({ targetLabel, onTake, onOpenChange }: FondoInboxProps) {
-  const [state, setState] = useState<PilotoFondoState>(EMPTY_STATE);
-  // id del pedido abierto, "draft" = lo que la tablet esta pasando, null = cerrado.
-  const [openId, setOpenId] = useState<number | typeof DRAFT | null>(null);
+  const [orders, setOrders] = useState<PilotoFondoOrder[]>([]);
+  // id del pedido abierto, null = cerrado.
+  const [openId, setOpenId] = useState<number | null>(null);
   const [isTaking, setIsTaking] = useState(false);
   const seenOrdersRef = useRef<Set<number> | null>(null);
 
@@ -61,15 +57,7 @@ export function FondoInbox({ targetLabel, onTake, onOpenChange }: FondoInboxProp
           }
         }
         seenOrdersRef.current = new Set(next.orders.map((o) => o.id));
-        setState(next);
-
-        // Ya reclamado: cada vuelta, traer SOLO lo nuevo desde la ultima
-        // vez y sumarlo a la caja activa sin pedir nada mas.
-        if (next.draftClaimed) {
-          const synced = await syncFondoDraft(false);
-          if (cancelled) return;
-          if (synced.items.length) onTake(synced.items);
-        }
+        setOrders(next.orders);
       } catch {
         // Sin conexion un momento: se reintenta en la proxima vuelta.
       }
@@ -80,21 +68,21 @@ export function FondoInbox({ targetLabel, onTake, onOpenChange }: FondoInboxProp
       cancelled = true;
       window.clearInterval(id);
     };
-  }, [onTake]);
+  }, []);
 
-  function setOpen(next: number | typeof DRAFT | null) {
+  function setOpen(next: number | null) {
     setOpenId(next);
     onOpenChange(next !== null);
   }
 
-  const openOrder = typeof openId === "number" ? state.orders.find((o) => o.id === openId) ?? null : null;
-  const openItems = openId === DRAFT ? state.draftItems : openOrder?.items ?? [];
-  const openTitle = openId === DRAFT ? "Fondo (sin enviar)" : openOrder ? `Pedido ${openOrder.number}` : "Pedido";
+  const openOrder = openId !== null ? orders.find((o) => o.id === openId) ?? null : null;
+  const openItems = openOrder?.items ?? [];
+  const openTitle = openOrder ? `Pedido ${openOrder.number}` : "Pedido";
 
-  // Pedido ya enviado: se toma de una sola vez, como siempre (son
-  // inmutables desde que la tablet aprieta Enviar).
+  // Pedido ya enviado: se toma de una sola vez (son inmutables desde que la
+  // tablet aprieta Enviar).
   async function handleTakeOrder() {
-    if (typeof openId !== "number") return;
+    if (openId === null) return;
     setIsTaking(true);
     try {
       const taken = await takeFondoOrder(openId);
@@ -104,30 +92,10 @@ export function FondoInbox({ targetLabel, onTake, onOpenChange }: FondoInboxProp
       } else {
         toast.info("Ese pedido ya no tenía productos.");
       }
-      setState((prev) => ({ ...prev, orders: prev.orders.filter((o) => o.id !== openId) }));
+      setOrders((prev) => prev.filter((o) => o.id !== openId));
       setOpen(null);
     } catch {
       toast.error("No se pudo tomar el pedido del fondo.");
-    } finally {
-      setIsTaking(false);
-    }
-  }
-
-  // Borrador sin enviar: "reclamarlo" no lo vacia -- entrega lo que haya
-  // hasta ahora y deja la puerta abierta para que lo que la tablet siga
-  // escaneando se siga sumando solo (ver el poll de mas arriba).
-  async function handleClaimDraft() {
-    setIsTaking(true);
-    try {
-      const claimed = await syncFondoDraft(true);
-      if (claimed.items.length) {
-        onTake(claimed.items);
-        toast.success(`Fondo pasado a ${targetLabel} · va a seguir sumando lo que escanee`);
-      }
-      setState((prev) => ({ ...prev, draftClaimed: true }));
-      setOpen(null);
-    } catch {
-      toast.error("No se pudo tomar el fondo.");
     } finally {
       setIsTaking(false);
     }
@@ -165,27 +133,20 @@ export function FondoInbox({ targetLabel, onTake, onOpenChange }: FondoInboxProp
             <button type="button" className="piloto-button piloto-button--danger" onClick={() => setOpen(null)}>
               Dejar para después
             </button>
-            {openId === DRAFT ? (
-              <button type="button" className="piloto-button piloto-button--primary" disabled={!openItems.length || isTaking} onClick={() => void handleClaimDraft()}>
-                {isTaking ? "Tomando…" : `Tomar y seguir recibiendo en ${targetLabel}`}
-              </button>
-            ) : (
-              <button type="button" className="piloto-button piloto-button--primary" disabled={!openItems.length || isTaking} onClick={() => void handleTakeOrder()}>
-                {isTaking ? "Pasando…" : `Pasar a ${targetLabel}`}
-              </button>
-            )}
+            <button type="button" className="piloto-button piloto-button--primary" disabled={!openItems.length || isTaking} onClick={() => void handleTakeOrder()}>
+              {isTaking ? "Pasando…" : `Pasar a ${targetLabel}`}
+            </button>
           </div>
         </div>
       </div>
     );
   }
 
-  if (!state.orders.length && !state.draftItems.length && !state.draftClaimed) return null;
+  if (!orders.length) return null;
 
   return (
     <div className="piloto-fondo-stack">
-      {state.draftClaimed ? <span className="piloto-fondo-pill piloto-fondo-pill--live">🔴 Recibiendo del fondo en vivo</span> : null}
-      {state.orders.map((order) => {
+      {orders.map((order) => {
         const { count, total } = summary(order.items);
         return (
           <button key={order.id} type="button" className="piloto-fondo-pill is-sent" onClick={() => setOpen(order.id)}>
@@ -193,11 +154,6 @@ export function FondoInbox({ targetLabel, onTake, onOpenChange }: FondoInboxProp
           </button>
         );
       })}
-      {state.draftItems.length && !state.draftClaimed ? (
-        <button type="button" className="piloto-fondo-pill" onClick={() => setOpen(DRAFT)}>
-          🛒 Fondo (sin enviar) · {formatCurrency(summary(state.draftItems).total)}
-        </button>
-      ) : null}
     </div>
   );
 }

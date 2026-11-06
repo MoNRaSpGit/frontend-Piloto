@@ -9,7 +9,9 @@
 //   - no hay ningun modal/proceso abierto (cobro, alta rapida, manual, edicion)
 //   - no hubo ninguna interaccion del usuario en los ultimos segundos
 // Si CUALQUIERA de esas tres no se cumple, se considera "en uso".
-const IDLE_INTERACTION_THRESHOLD_MS = 15_000;
+// 45 s (06/11/2026): sin cartel de por medio, la recarga no tiene que caer
+// entre dos clientes seguidos.
+const IDLE_INTERACTION_THRESHOLD_MS = 45_000;
 
 let lastInteractionAt = Date.now();
 let isStructurallyBusy = false;
