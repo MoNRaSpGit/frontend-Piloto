@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchPublishedFrontendBuildMeta, FRONTEND_BUILD_INFO } from "../config/build";
-import { isAppIdle } from "../state/appActivity";
+import { isAppIdle, saveUiForUpdateReload } from "../state/appActivity";
 
 const UPDATE_CHECK_INTERVAL_MS = 2 * 60 * 1000;
 const APP_CACHE_PREFIX = "piloto-";
@@ -84,6 +84,7 @@ export function AppUpdateNotice() {
     } catch {
       // If cleanup fails, still force a reload so the app can try again.
     } finally {
+      saveUiForUpdateReload();
       window.location.reload();
     }
   }

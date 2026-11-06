@@ -1,4 +1,5 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { reportUiState, uiRestoredAfterUpdate } from "../../../shared/state/appActivity";
 import type { CartItem, PilotoProduct } from "../piloto.types";
 
 // Cajas independientes (22/09/2026, pedido explicito): "no crear dos
@@ -32,7 +33,12 @@ function createEmptyRegisterState(): RegisterState {
 }
 
 export function usePilotoCart(registerIds: PilotoRegisterId[] = DEFAULT_PILOTO_REGISTER_IDS) {
-  const [activeRegisterId, setActiveRegisterId] = useState<PilotoRegisterId>(registerIds[0]);
+  const [activeRegisterId, setActiveRegisterId] = useState<PilotoRegisterId>(() =>
+    uiRestoredAfterUpdate && registerIds.includes(uiRestoredAfterUpdate.registerId) ? uiRestoredAfterUpdate.registerId : registerIds[0]
+  );
+  useEffect(() => {
+    reportUiState({ registerId: activeRegisterId });
+  }, [activeRegisterId]);
   const [registers, setRegisters] = useState<Record<PilotoRegisterId, RegisterState>>(() =>
     Object.fromEntries(registerIds.map((id) => [id, createEmptyRegisterState()]))
   );

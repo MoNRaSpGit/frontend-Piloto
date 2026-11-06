@@ -39,3 +39,45 @@ export function isAppIdle(): boolean {
   if (isStructurallyBusy) return false;
   return Date.now() - lastInteractionAt >= IDLE_INTERACTION_THRESHOLD_MS;
 }
+
+// Recarga por actualizacion (06/11/2026, pedido explicito): "que siga todo
+// como esta". El modo Pro y la caja elegida NO se guardan nunca (a proposito:
+// cerrar y reabrir la app vuelve a Basico), pero una recarga que hace la app
+// SOLA para actualizarse no tiene que tocarlos. Justo antes de recargar por
+// actualizacion se anota el estado en sessionStorage (solo sobrevive a esa
+// recarga, en esa pestana) y al arrancar se lee una unica vez y se borra.
+// La pestana activa (tablet / productos / clientes...) ya se guarda aparte
+// en localStorage, ver PilotoHomePage.tsx.
+type UiSnapshot = { mode: "basic" | "pro"; registerId: number };
+const UI_RESTORE_KEY = "piloto-ui-after-update";
+let currentUi: UiSnapshot = { mode: "basic", registerId: 1 };
+
+export function reportUiState(partial: Partial<UiSnapshot>) {
+  currentUi = { ...currentUi, ...partial };
+}
+
+export function saveUiForUpdateReload() {
+  try {
+    window.sessionStorage.setItem(UI_RESTORE_KEY, JSON.stringify(currentUi));
+  } catch {
+    // Sin storage: se recarga igual, vuelve a Basico como siempre.
+  }
+}
+
+function readUiAfterUpdate(): UiSnapshot | null {
+  try {
+    const raw = window.sessionStorage.getItem(UI_RESTORE_KEY);
+    window.sessionStorage.removeItem(UI_RESTORE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<UiSnapshot>;
+    return {
+      mode: parsed.mode === "pro" ? "pro" : "basic",
+      registerId: typeof parsed.registerId === "number" ? parsed.registerId : 1
+    };
+  } catch {
+    return null;
+  }
+}
+
+// Se lee una sola vez al cargar el modulo (antes de que arranque React).
+export const uiRestoredAfterUpdate: UiSnapshot | null = typeof window !== "undefined" ? readUiAfterUpdate() : null;

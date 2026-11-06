@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { reportUiState, uiRestoredAfterUpdate } from "../../shared/state/appActivity";
 
 // Modo Basico / Pro (23/09/2026, pedido explicito): "un solo proyecto y
 // una sola base de codigo... la idea es tener una sola aplicacion y
@@ -30,7 +31,12 @@ try {
 }
 
 export function usePilotoMode() {
-  const [mode, setMode] = useState<PilotoMode>("basic");
+  // Solo vuelve a Pro si la recarga la hizo la app sola para actualizarse
+  // (ver appActivity.ts); cerrar y reabrir sigue arrancando en Basico.
+  const [mode, setMode] = useState<PilotoMode>(uiRestoredAfterUpdate?.mode ?? "basic");
+  useEffect(() => {
+    reportUiState({ mode });
+  }, [mode]);
 
   return { mode, setMode, isPro: mode === "pro" };
 }
