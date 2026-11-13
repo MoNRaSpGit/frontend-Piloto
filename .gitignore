@@ -6,3 +6,6 @@ dist
 coverage
 *.tsbuildinfo
 .env
+
+# Interno: documentacion y respaldos, no se suben (13/11/2026)
+CONTEXTO.md
