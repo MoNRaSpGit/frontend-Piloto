@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 
 type ScannerInputProps = {
   value: string;
@@ -25,6 +25,8 @@ function isLikelyInvalidScan(value: string) {
   return REPEATED_DIGIT_PATTERN.test(value);
 }
 
+const INVALID_SCAN_MESSAGE = "Lectura invalida (lector desincronizado). Volve a escanear.";
+
 export function ScannerInput({ value, onChange, onSubmit, onEmptyEnter, isLoading, error, focusSignal, noKeyboard = false }: ScannerInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [invalidScanWarning, setInvalidScanWarning] = useState("");
@@ -37,6 +39,17 @@ export function ScannerInput({ value, onChange, onSubmit, onEmptyEnter, isLoadin
     }
   }, [isLoading, focusSignal]);
 
+  // Tecla "pegada" (14/11/2026): si el lector queda trabado mandando un
+  // digito, el sistema lo repite sin parar (event.repeat = true) y el campo
+  // se llena de "77777777". Un lector bueno NUNCA manda repeticiones de
+  // tecla mantenida (cada digito es una pulsacion nueva), asi que se
+  // descartan.
+  function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
+    if (event.repeat && /^d$/.test(event.key)) {
+      event.preventDefault();
+    }
+  }
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const trimmed = value.trim();
@@ -47,7 +60,7 @@ export function ScannerInput({ value, onChange, onSubmit, onEmptyEnter, isLoadin
     }
 
     if (isLikelyInvalidScan(trimmed)) {
-      setInvalidScanWarning("Lectura invalida (lector desincronizado). Volve a escanear.");
+      setInvalidScanWarning(INVALID_SCAN_MESSAGE);
       onChange("");
       return;
     }
@@ -67,9 +80,18 @@ export function ScannerInput({ value, onChange, onSubmit, onEmptyEnter, isLoadin
           autoComplete="off"
           placeholder="Escanear aqui"
           value={value}
+          onKeyDown={handleKeyDown}
           onChange={(event) => {
+            const next = event.target.value;
+            // Lectura basura (mismo digito 6+ veces): se vacia al instante
+            // en vez de dejar crecer la linea de numeros.
+            if (isLikelyInvalidScan(next.trim())) {
+              setInvalidScanWarning(INVALID_SCAN_MESSAGE);
+              onChange("");
+              return;
+            }
             setInvalidScanWarning("");
-            onChange(event.target.value);
+            onChange(next);
           }}
           disabled={isLoading}
           autoFocus
