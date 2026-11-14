@@ -21,6 +21,10 @@ import type { CartItem } from "../piloto.types";
 // pero NO tiene boton de tomar). Al apretar Enviar pasa a ser un pedido
 // verde, ya tomable.
 //
+// Un solo boton en el pedido (14/11/2026, pedido explicito): "Pasar a ..."; se
+// saco "Dejar para despues" para que no se cancele sin querer al apretar
+// mal. Para cerrar sin pasar queda la cruz arriba a la derecha.
+//
 // Un codigo que la tablet escanea sin encontrarlo en el catalogo llega
 // como una linea mas, "Producto no encontrado" (ver PilotoTabletScreen.tsx)
 // -- no hay nada especial que hacer aca, se edita como cualquier otra
@@ -128,8 +132,8 @@ export function FondoInbox({ targetLabel, onTake, onOpenChange }: FondoInboxProp
         <div className="piloto-modal-card">
           <div className="piloto-modal-card__header">
             <h2>{openTitle}</h2>
-            <button type="button" className="piloto-modal-close" onClick={() => setOpen(null)}>
-              Cerrar
+            <button type="button" className="piloto-modal-close piloto-modal-close--x" aria-label="Cerrar" onClick={() => setOpen(null)}>
+              ✕
             </button>
           </div>
           {openItems.length ? (
@@ -152,17 +156,9 @@ export function FondoInbox({ targetLabel, onTake, onOpenChange }: FondoInboxProp
           {openId === DRAFT ? (
             <>
               <p className="piloto-tablet__empty">La tablet todavía lo está pasando. Cuando toque Enviar, te llega como pedido.</p>
-              <div className="piloto-modal-card__actions">
-                <button type="button" className="piloto-button piloto-button--primary" onClick={() => setOpen(null)}>
-                  Cerrar
-                </button>
-              </div>
             </>
           ) : (
             <div className="piloto-modal-card__actions">
-              <button type="button" className="piloto-button piloto-button--danger" onClick={() => setOpen(null)}>
-                Dejar para después
-              </button>
               <button type="button" className="piloto-button piloto-button--primary" disabled={!openItems.length || isTaking} onClick={() => void handleTakeOrder()}>
                 {isTaking ? "Pasando…" : `Pasar a ${targetLabel}`}
               </button>

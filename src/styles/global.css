@@ -1383,6 +1383,13 @@ input {
   cursor: pointer;
 }
 
+.piloto-modal-close--x {
+  width: 52px;
+  padding: 0;
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
 .piloto-modal-card__total-label {
   margin: 0;
   font-size: 1.25rem;
