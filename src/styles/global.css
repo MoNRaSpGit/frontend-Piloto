@@ -1746,6 +1746,13 @@ input {
   font-size: 0.85rem;
 }
 
+/* Lo que la tablet esta pasando sin enviar: gris, solo para mirar. */
+.piloto-fondo-pill.is-draft {
+  background: #64748b;
+  box-shadow: none;
+  opacity: 0.92;
+}
+
 .piloto-fondo-pill.is-sent {
   background: #15803d;
   animation: piloto-fondo-pulse 1.2s ease-in-out infinite;
