@@ -34,9 +34,19 @@ export function ScannerInput({ value, onChange, onSubmit, onEmptyEnter, isLoadin
   // Un lector laser tipea sobre lo que este enfocado y manda Enter - reenfocar
   // despues de cada busqueda para que el proximo escaneo caiga en el campo sin tocar el mouse.
   useEffect(() => {
-    if (!isLoading) {
-      inputRef.current?.focus();
-    }
+    if (isLoading) return;
+    inputRef.current?.focus();
+    // Segundo intento (25/11/2026, bug: al volver de la pestana "Clientes" el
+    // cursor quedaba afuera): si el navegador dejo el foco en el cuerpo o en
+    // el boton de la pestana recien tocada, se lo devolvemos al escaner.
+    // Nunca se lo saca a otro campo de texto (modales, buscadores).
+    const retry = window.setTimeout(() => {
+      const active = document.activeElement;
+      if (!active || active === document.body || active.tagName === "BUTTON") {
+        inputRef.current?.focus();
+      }
+    }, 80);
+    return () => window.clearTimeout(retry);
   }, [isLoading, focusSignal]);
 
   // Tecla "pegada" (14/11/2026): si el lector queda trabado mandando un

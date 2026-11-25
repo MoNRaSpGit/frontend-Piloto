@@ -166,6 +166,15 @@ export function PilotoHomePage() {
     }
   }, [isCheckoutOpen, quickAddBarcode, manualModalLabel, editingProductId, isFondoOpen]);
 
+  // Al volver a la pestana "Productos" (desde Clientes, Tablet, etc.), el
+  // cursor tiene que quedar en el campo del escaner (25/11/2026, pedido
+  // explicito).
+  useEffect(() => {
+    if (activeTopTab === "productos") {
+      setFocusSignal((signal) => signal + 1);
+    }
+  }, [activeTopTab]);
+
   // Le avisa a AppUpdateNotice si es seguro actualizar solo (pedido
   // explicito, 22/09/2026): "ocupada" = hay algun modal/proceso abierto O
   // hay productos cargados en CUALQUIER caja (no solo la activa -- Caja 2
