@@ -55,7 +55,7 @@ export function ScannerInput({ value, onChange, onSubmit, onEmptyEnter, isLoadin
   // tecla mantenida (cada digito es una pulsacion nueva), asi que se
   // descartan.
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    if (event.repeat && /^d$/.test(event.key)) {
+    if (event.repeat && /^\d$/.test(event.key)) {
       event.preventDefault();
     }
   }

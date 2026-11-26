@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import { findProductByBarcode, getFondoState, setFondoCart } from "../piloto.api";
+import { createProduct, findProductByBarcode, getFondoState, setFondoCart, updateProduct } from "../piloto.api";
 import type { CartItem } from "../piloto.types";
 import { ManualProductModal } from "../components/ManualProductModal";
 import { ScannerCart } from "../components/ScannerCart";
@@ -12,15 +12,12 @@ import { ScannerInput } from "../components/ScannerInput";
 // la ve y la toma a su caja cuando quiere (ver FondoInbox.tsx). Asi no se
 // mezclan los productos de dos clientes que se atienden al mismo tiempo.
 // Pensada para una persona mayor: solo el escaner y "Producto manual"; la
-// lista (la misma del mostrador, con - y +, sin Editar), el total y "Enviar"
+// lista (la misma del mostrador, con Editar desde el 26/11/2026), el total y "Enviar"
 // aparecen cuando hay algo escaneado. Sin carteles ni "Borrar todo": al
 // enviar, la tablet queda vacia y empieza de nuevo (lo enviado queda
 // esperando en el mostrador, ver piloto-fondo.service.ts en el backend).
 
 const POLL_MS = 3000;
-// Despues de guardar, se ignora un ratito lo que diga el servidor para no
-// pisar con datos viejos un escaneo recien hecho.
-const WRITE_GRACE_MS = 1500;
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat("es-UY", { style: "currency", currency: "UYU", maximumFractionDigits: 0 }).format(amount);
@@ -35,16 +32,40 @@ export function PilotoTabletScreen() {
   const [focusSignal, setFocusSignal] = useState(0);
   const [isManualOpen, setIsManualOpen] = useState(false);
   const [lastScannedProductId, setLastScannedProductId] = useState<number | null>(null);
-  const lastWriteRef = useRef(0);
+  const [editingProductId, setEditingProductId] = useState<number | null>(null);
   const itemsRef = useRef<CartItem[]>([]);
   itemsRef.current = items;
+  // Bug (26/11/2026, "lo escanea, aparece y desaparece"): una consulta al
+  // servidor que salia ANTES del escaneo y volvia DESPUES traia la lista
+  // vieja (vacia) y borraba el producto recien escaneado. Por eso una
+  // respuesta solo vale si durante la consulta no se escribio nada.
+  const writeCountRef = useRef(0);
+  const pendingWritesRef = useRef(0);
+  // false mientras lo que se ve en pantalla no este confirmado en el servidor.
+  const isSavedRef = useRef(true);
+  const writeQueueRef = useRef<Promise<unknown>>(Promise.resolve());
+
+  // Los guardados van de a uno y en orden: con mala señal, uno viejo no puede
+  // llegar despues que uno nuevo (ni despues de "Enviar").
+  async function write(next: CartItem[], sent: boolean) {
+    writeCountRef.current += 1;
+    pendingWritesRef.current += 1;
+    isSavedRef.current = false;
+    const request = writeQueueRef.current.then(() => setFondoCart(next, sent));
+    writeQueueRef.current = request.catch(() => undefined);
+    try {
+      await request;
+      if (pendingWritesRef.current === 1) isSavedRef.current = true;
+    } finally {
+      pendingWritesRef.current -= 1;
+    }
+  }
 
   async function save(next: CartItem[]) {
     setItems(next);
     itemsRef.current = next;
-    lastWriteRef.current = Date.now();
     try {
-      await setFondoCart(next, false);
+      await write(next, false);
     } catch {
       toast.error("No se pudo guardar en el servidor. Revisá la conexión.");
     }
@@ -55,10 +76,11 @@ export function PilotoTabletScreen() {
   useEffect(() => {
     let cancelled = false;
     async function poll(initial: boolean) {
-      if (!initial && Date.now() - lastWriteRef.current < WRITE_GRACE_MS) return;
+      if (pendingWritesRef.current > 0 || !isSavedRef.current) return;
+      const writesBefore = writeCountRef.current;
       try {
         const cart = await getFondoState();
-        if (cancelled) return;
+        if (cancelled || writeCountRef.current !== writesBefore) return;
         if (initial) {
           setItems(cart.draftItems);
         } else if (cart.draftItems.length === 0 && itemsRef.current.length > 0) {
@@ -139,15 +161,40 @@ export function PilotoTabletScreen() {
     setFocusSignal((s) => s + 1);
   }
 
+  // Editar (26/11/2026, pedido explicito: "si edita el producto desde la
+  // tablet, salia 100 y ahora 120, que quede oficial"): igual que en el
+  // mostrador, cambia el producto en el catalogo; un "no encontrado" se crea
+  // con su codigo, y una linea manual solo cambia en esta lista.
+  async function handleEdit(productId: number, changes: { name: string; price: number }) {
+    const target = itemsRef.current.find((item) => item.productId === productId);
+    if (!target) return false;
+    try {
+      let updated: CartItem = { ...target, name: changes.name, price: changes.price };
+      if (target.pendingBarcode) {
+        const { item: product } = await createProduct(target.pendingBarcode, changes.name, changes.price);
+        updated = { productId: product.id, name: product.name, price: product.price, quantity: target.quantity, imageUrl: product.imageUrl };
+        toast.success("Producto creado y cargado.");
+      } else if (productId > 0) {
+        await updateProduct(productId, changes.name, changes.price);
+        toast.success("Producto actualizado.");
+      }
+      setLastScannedProductId(updated.productId);
+      await save(itemsRef.current.map((item) => (item.productId === productId ? { ...updated, quantity: item.quantity } : item)));
+      return true;
+    } catch (editError) {
+      toast.error(editError instanceof Error ? editError.message : "No se pudo guardar el producto.");
+      return false;
+    }
+  }
+
   // Enviar: lo pasado queda esperando en el mostrador y la tablet arranca
   // vacia para el proximo cliente. Si falla, no se borra nada.
   async function handleSend() {
     const toSend = itemsRef.current;
     if (!toSend.length || isSending) return;
     setIsSending(true);
-    lastWriteRef.current = Date.now();
     try {
-      await setFondoCart(toSend, true);
+      await write(toSend, true);
       setItems([]);
       itemsRef.current = [];
       setLastScannedProductId(null);
@@ -195,10 +242,13 @@ export function PilotoTabletScreen() {
         lastScannedProductId={lastScannedProductId}
         onAddOne={(productId) => void changeQuantity(productId, 1)}
         onRemoveOne={(productId) => void changeQuantity(productId, -1)}
-        onEdit={async () => false}
-        editingProductId={null}
-        onSetEditingProductId={() => undefined}
-        canEdit={false}
+        onEdit={handleEdit}
+        editingProductId={editingProductId}
+        onSetEditingProductId={(productId) => {
+          setEditingProductId(productId);
+          // Al cerrar, el cursor vuelve al escaner.
+          if (productId === null) setFocusSignal((s) => s + 1);
+        }}
       />
 
       {items.length ? (

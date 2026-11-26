@@ -16,10 +16,9 @@ type ScannerCartProps = {
   // cursor vuelve al input").
   editingProductId: number | null;
   onSetEditingProductId: (productId: number | null) => void;
-  // false en la tablet del fondo (30/10/2026, pedido explicito: "el editar
-  // no le pongas"): solo - y +.
-  canEdit?: boolean;
 };
+
+const MAX_PRICE = 100000;
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat("es-UY", {
@@ -101,8 +100,10 @@ function EditItemModal({
     const trimmedName = name.trim() || "S/N";
     const parsedPrice = Number(price.replace(",", "."));
 
-    if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
-      setError("Ingresa un precio valido mayor a 0.");
+    // Tope (26/11/2026): si alguien escanea con esta ventana abierta, el
+    // codigo de barras cae en el precio y el Enter del lector lo guardaria.
+    if (!Number.isFinite(parsedPrice) || parsedPrice <= 0 || parsedPrice > MAX_PRICE) {
+      setError(parsedPrice > MAX_PRICE ? "Ese precio es demasiado alto (¿se escaneó un código?)." : "Ingresa un precio valido mayor a 0.");
       priceInputRef.current?.focus();
       priceInputRef.current?.select();
       return;
@@ -178,8 +179,7 @@ export function ScannerCart({
   onRemoveOne,
   onEdit,
   editingProductId,
-  onSetEditingProductId,
-  canEdit = true
+  onSetEditingProductId
 }: ScannerCartProps) {
   const editingItem = items.find((item) => item.productId === editingProductId) ?? null;
 
@@ -194,7 +194,7 @@ export function ScannerCart({
           <thead>
             <tr>
               <th>Producto</th>
-              {canEdit ? <th className="text-center">Editar</th> : null}
+              <th className="text-center">Editar</th>
               <th className="text-center">Cant.</th>
               <th className="text-end">Total</th>
               <th className="text-center piloto-cart-table__remove-col">Quitar</th>
@@ -214,13 +214,11 @@ export function ScannerCart({
                       <div className="piloto-price-badge">{formatCurrency(item.price)}</div>
                     </div>
                   </td>
-                  {canEdit ? (
-                    <td className="text-center">
-                      <button type="button" className="piloto-edit-btn" onClick={() => onSetEditingProductId(item.productId)}>
-                        Editar
-                      </button>
-                    </td>
-                  ) : null}
+                  <td className="text-center">
+                    <button type="button" className="piloto-edit-btn" onClick={() => onSetEditingProductId(item.productId)}>
+                      Editar
+                    </button>
+                  </td>
                   <td className="text-center piloto-cart-table__strong">
                     {/* Pedido explicito (25/09/2026): "- 20 +" con botones
                         grandes, para sumar/restar sin apuntar al producto. */}
