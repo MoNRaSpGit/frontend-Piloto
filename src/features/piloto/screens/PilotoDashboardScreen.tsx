@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { getSalesSummary } from "../piloto.api";
+import { formatAccountAmount } from "../piloto.account";
 import type { PilotoSalesSummary, PilotoSaleMovement } from "../piloto.types";
 import { printSaleTicketByQz } from "../services/piloto.qzPrint";
 
@@ -130,7 +131,31 @@ export function PilotoDashboardScreen() {
           <strong className="piloto-dashboard-stat__value">{formatCurrency(summary.profitAmount)}</strong>
           <span className="piloto-dashboard-stat__hint">Estimada sobre las ventas</span>
         </div>
+        <div className="piloto-dashboard-stat">
+          <span className="piloto-dashboard-stat__label">Cobros de cuentas</span>
+          <strong className="piloto-dashboard-stat__value">{formatAccountAmount(summary.accountPaymentsAmount ?? 0)}</strong>
+          <span className="piloto-dashboard-stat__hint">Aparte: el fiado ya cuenta en Ventas</span>
+        </div>
       </div>
+
+      {summary.accountPayments?.length ? (
+        <>
+          <div className="piloto-dashboard-section-header">
+            <h2 className="piloto-dashboard-section-title">Cobros de hoy</h2>
+          </div>
+          <ul className="piloto-dashboard-movements">
+            {summary.accountPayments.map((payment) => (
+              <li key={payment.id} className="piloto-dashboard-movement">
+                <div className="piloto-dashboard-movement__header">
+                  <span className="piloto-dashboard-movement__time">{formatTime(payment.createdAt)}</span>
+                  <span>{payment.clientName}</span>
+                  <strong className="piloto-dashboard-movement__total">{formatAccountAmount(payment.amount)}</strong>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
 
       {(() => {
         // La numeracion "Venta #1, #2..." va en orden cronologico (la

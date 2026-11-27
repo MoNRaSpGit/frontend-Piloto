@@ -1,26 +1,10 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { toast } from "react-toastify";
-import { createClient, deleteClient, listAccountEntries, listClients, settleAccount } from "../piloto.api";
+import { createClient, deleteClient, listAccountEntries, listAccountPayments, listClients, registerAccountPayment } from "../piloto.api";
+import { accountBalance, createRequestKeeper, formatAccountAmount as formatCurrency, formatAccountDate as formatDate } from "../piloto.account";
+import { AccountPaymentModal } from "../components/AccountPaymentModal";
 import { printSaleTicketByQz } from "../services/piloto.qzPrint";
-import type { CartItem, PilotoAccountEntry, PilotoClient } from "../piloto.types";
-
-function formatCurrency(amount: number) {
-  return new Intl.NumberFormat("es-UY", {
-    style: "currency",
-    currency: "UYU",
-    maximumFractionDigits: 0
-  }).format(amount);
-}
-
-function formatDate(isoDate: string) {
-  return new Date(isoDate).toLocaleString("es-UY", {
-    timeZone: "America/Montevideo",
-    day: "2-digit",
-    month: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit"
-  });
-}
+import type { CartItem, PilotoAccountEntry, PilotoAccountPayment, PilotoClient } from "../piloto.types";
 
 // "Clientes" / cuenta corriente (06/10/2026, pedido explicito: "hacerlo
 // con tres columnas, como habiamos hecho en el Joker" -- izquierda para
@@ -40,15 +24,19 @@ export function ClientesScreen({ onClose }: { onClose: () => void }) {
   const [isCreating, setIsCreating] = useState(false);
   const [createError, setCreateError] = useState("");
 
-  const [isConfirmingSettle, setIsConfirmingSettle] = useState(false);
+  const [payments, setPayments] = useState<PilotoAccountPayment[]>([]);
+  const [paymentMode, setPaymentMode] = useState<"full" | "partial" | null>(null);
+  const [isPaying, setIsPaying] = useState(false);
+  const paymentRequest = useRef(createRequestKeeper());
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
 
   function reload() {
-    Promise.all([listClients(), listAccountEntries()])
-      .then(([clientsData, entriesData]) => {
+    Promise.all([listClients(), listAccountEntries(), listAccountPayments()])
+      .then(([clientsData, entriesData, paymentsData]) => {
         setClients(clientsData);
         setEntries(entriesData);
+        setPayments(paymentsData);
       })
       .catch((error) => toast.error(error instanceof Error ? error.message : "No se pudo cargar clientes."));
   }
@@ -57,11 +45,17 @@ export function ClientesScreen({ onClose }: { onClose: () => void }) {
 
   const saldoPorCliente = useMemo(() => {
     const map = new Map<number, number>();
-    for (const entry of entries) {
-      map.set(entry.clientId, (map.get(entry.clientId) ?? 0) + entry.total);
+    for (const clientId of new Set(entries.map((entry) => entry.clientId))) {
+      map.set(
+        clientId,
+        accountBalance(
+          entries.filter((entry) => entry.clientId === clientId),
+          payments.filter((payment) => payment.clientId === clientId)
+        )
+      );
     }
     return map;
-  }, [entries]);
+  }, [entries, payments]);
 
   const visibleClients = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -73,7 +67,13 @@ export function ClientesScreen({ onClose }: { onClose: () => void }) {
   const selectedEntries = entries
     .filter((entry) => entry.clientId === selectedClientId)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const selectedPayments = payments.filter((payment) => payment.clientId === selectedClientId);
   const selectedSaldo = selectedClientId !== null ? saldoPorCliente.get(selectedClientId) ?? 0 : 0;
+  // Boletas y pagos de la cuenta abierta, lo mas nuevo arriba.
+  const movements = [
+    ...selectedEntries.map((entry) => ({ key: `f${entry.id}`, createdAt: entry.createdAt, entry, payment: null })),
+    ...selectedPayments.map((payment) => ({ key: `p${payment.id}`, createdAt: payment.createdAt, entry: null, payment }))
+  ].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   async function handleCreateClient(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -98,15 +98,21 @@ export function ClientesScreen({ onClose }: { onClose: () => void }) {
     }
   }
 
-  async function handleSettle() {
-    if (selectedClientId === null) return;
+  async function handlePayment(amount: number) {
+    if (selectedClientId === null || paymentMode === null) return;
+    const settle = paymentMode === "full";
+    setIsPaying(true);
     try {
-      await settleAccount(selectedClientId);
-      toast.success("Cuenta saldada.");
-      setIsConfirmingSettle(false);
-      reload();
+      const requestId = paymentRequest.current.idFor(`${selectedClientId}|${amount}|${selectedSaldo}`);
+      const { balanceAfter } = await registerAccountPayment({ requestId, clientId: selectedClientId, amount, settle });
+      paymentRequest.current.done();
+      toast.success(balanceAfter === 0 ? "Cuenta saldada." : `Pago anotado. Queda debiendo ${formatCurrency(balanceAfter)}.`);
+      setPaymentMode(null);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "No se pudo saldar la cuenta.");
+      toast.error(error instanceof Error ? error.message : "No se pudo registrar el pago.");
+    } finally {
+      setIsPaying(false);
+      reload();
     }
   }
 
@@ -128,7 +134,7 @@ export function ClientesScreen({ onClose }: { onClose: () => void }) {
   // sola factura larga, no una por boleta"). Junta TODAS las boletas
   // abiertas del cliente en un solo ticket, items uno abajo del otro.
   async function handlePrintAccount() {
-    if (!selectedClient || selectedEntries.length === 0) return;
+    if (!selectedClient || movements.length === 0) return;
 
     setIsPrinting(true);
     try {
@@ -141,6 +147,16 @@ export function ClientesScreen({ onClose }: { onClose: () => void }) {
           imageUrl: null
         }))
       );
+      // Los pagos parciales van restando, asi el total del ticket cierra.
+      for (const payment of selectedPayments) {
+        items.push({
+          productId: 0,
+          name: `Pago ${formatDate(payment.createdAt).slice(0, 5)}`,
+          price: -payment.amount,
+          quantity: 1,
+          imageUrl: null
+        });
+      }
       await printSaleTicketByQz({
         externalId: `piloto-cuenta-${selectedClient.id}`,
         chargedAtIso: new Date().toISOString(),
@@ -214,7 +230,7 @@ export function ClientesScreen({ onClose }: { onClose: () => void }) {
                       className={isActive ? "piloto-clientes-row is-active" : "piloto-clientes-row"}
                       onClick={() => {
                         setSelectedClientId(client.id);
-                        setIsConfirmingSettle(false);
+                        setPaymentMode(null);
                         setIsConfirmingDelete(false);
                       }}
                     >
@@ -251,63 +267,67 @@ export function ClientesScreen({ onClose }: { onClose: () => void }) {
               </div>
 
               <div className="piloto-clientes-actions">
-                {isConfirmingSettle ? (
-                  <>
-                    <span className="piloto-clientes-confirm-text">¿Saldar toda la cuenta?</span>
-                    <button type="button" className="piloto-button piloto-button--primary" onClick={handleSettle}>
-                      Si, saldar
-                    </button>
-                    <button type="button" className="piloto-button piloto-button--ghost" onClick={() => setIsConfirmingSettle(false)}>
-                      No
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      className="piloto-button piloto-button--primary"
-                      onClick={() => setIsConfirmingSettle(true)}
-                      disabled={selectedSaldo <= 0}
-                    >
-                      Saldar cuenta
-                    </button>
-                    <button
-                      type="button"
-                      className="piloto-button piloto-button--ghost"
-                      onClick={() => void handlePrintAccount()}
-                      disabled={selectedEntries.length === 0 || isPrinting}
-                    >
-                      {isPrinting ? "Imprimiendo..." : "Imprimir"}
-                    </button>
-                  </>
-                )}
+                <button type="button" className="piloto-button piloto-button--primary" onClick={() => setPaymentMode("full")} disabled={selectedSaldo <= 0}>
+                  Saldar cuenta
+                </button>
+                <button type="button" className="piloto-button piloto-button--pay" onClick={() => setPaymentMode("partial")} disabled={selectedSaldo <= 0}>
+                  Pagó una parte
+                </button>
+                <button
+                  type="button"
+                  className="piloto-button piloto-button--ghost"
+                  onClick={() => void handlePrintAccount()}
+                  disabled={movements.length === 0 || isPrinting}
+                >
+                  {isPrinting ? "Imprimiendo..." : "Imprimir"}
+                </button>
               </div>
 
               <h4 className="piloto-clientes-section-title">Boletas</h4>
-              {selectedEntries.length === 0 ? (
+              {movements.length === 0 ? (
                 <section className="piloto-empty-state">
                   <p>No tiene boletas abiertas.</p>
                 </section>
               ) : (
                 <ul className="piloto-clientes-entries">
-                  {selectedEntries.map((entry) => (
-                    <li key={entry.id} className="piloto-clientes-entry">
-                      <div className="piloto-clientes-entry__header">
-                        <strong>{formatDate(entry.createdAt)}</strong>
-                        <strong>{formatCurrency(entry.total)}</strong>
-                      </div>
-                      <ul className="piloto-clientes-entry__items">
-                        {entry.items.map((item, index) => (
-                          <li key={index}>
-                            {item.quantity > 1 ? `${item.quantity}x ` : ""}
-                            {item.productName}
-                          </li>
-                        ))}
-                      </ul>
-                    </li>
-                  ))}
+                  {movements.map(({ key, entry, payment }) =>
+                    entry ? (
+                      <li key={key} className="piloto-clientes-entry">
+                        <div className="piloto-clientes-entry__header">
+                          <strong>{formatDate(entry.createdAt)}</strong>
+                          <strong>{formatCurrency(entry.total)}</strong>
+                        </div>
+                        <ul className="piloto-clientes-entry__items">
+                          {entry.items.map((item, index) => (
+                            <li key={index}>
+                              {item.quantity > 1 ? `${item.quantity}x ` : ""}
+                              {item.productName}
+                            </li>
+                          ))}
+                        </ul>
+                      </li>
+                    ) : (
+                      <li key={key} className="piloto-clientes-entry piloto-clientes-entry--payment">
+                        <div className="piloto-clientes-entry__header">
+                          <strong>Pagó · {formatDate(payment!.createdAt)}</strong>
+                          <strong>- {formatCurrency(payment!.amount)}</strong>
+                        </div>
+                      </li>
+                    )
+                  )}
                 </ul>
               )}
+
+              {paymentMode ? (
+                <AccountPaymentModal
+                  clientName={selectedClient.name}
+                  balance={selectedSaldo}
+                  mode={paymentMode}
+                  isSubmitting={isPaying}
+                  onClose={() => setPaymentMode(null)}
+                  onConfirm={(amount) => void handlePayment(amount)}
+                />
+              ) : null}
 
               <div className="piloto-clientes-danger-zone">
                 {isConfirmingDelete ? (
@@ -321,8 +341,13 @@ export function ClientesScreen({ onClose }: { onClose: () => void }) {
                     </button>
                   </>
                 ) : (
-                  <button type="button" className="piloto-button piloto-button--ghost" onClick={() => setIsConfirmingDelete(true)}>
-                    Borrar cliente
+                  <button
+                    type="button"
+                    className="piloto-button piloto-button--ghost"
+                    onClick={() => setIsConfirmingDelete(true)}
+                    disabled={selectedSaldo !== 0}
+                  >
+                    {selectedSaldo !== 0 ? "No se puede borrar: tiene saldo" : "Borrar cliente"}
                   </button>
                 )}
               </div>

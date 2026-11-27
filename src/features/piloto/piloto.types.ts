@@ -69,6 +69,21 @@ export type PilotoSaleMovement = {
   items: PilotoSaleMovementItem[];
 };
 
+export type PilotoAccountPayment = {
+  id: number;
+  clientId: number;
+  amount: number;
+  createdAt: string;
+  closedByPaymentId: number | null;
+  voided: boolean;
+};
+
+export type PilotoAccountHistory = {
+  clients: PilotoClient[];
+  entries: PilotoAccountEntry[];
+  payments: PilotoAccountPayment[];
+};
+
 export type PilotoSalesSummary = {
   date: string;
   salesCount: number;
@@ -76,6 +91,9 @@ export type PilotoSalesSummary = {
   profitAmount: number;
   profitMarginRatio: number;
   sales: PilotoSaleMovement[];
+  // Cobros de cuentas del dia (no suman a las ventas).
+  accountPayments?: { id: number; clientName: string; amount: number; createdAt: string }[];
+  accountPaymentsAmount?: number;
 };
 
 // Clientes / cuenta corriente (06/10/2026): venta a credito ligada a un
@@ -87,6 +105,7 @@ export type PilotoClient = {
   phone: string | null;
   address: string | null;
   createdAt: string;
+  deletedAt?: string | null;
 };
 
 export type PilotoAccountEntryItem = {
@@ -102,4 +121,6 @@ export type PilotoAccountEntry = {
   total: number;
   items: PilotoAccountEntryItem[];
   createdAt: string;
+  closedByPaymentId: number | null;
+  voided: boolean;
 };

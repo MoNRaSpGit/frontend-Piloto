@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { toast } from "react-toastify";
-import { createAccountEntry, createProduct, createSale, findProductByBarcode, listClients, normalizeBarcode, updateProduct } from "./piloto.api";
+import { createCreditSale, createProduct, createSale, findProductByBarcode, listClients, normalizeBarcode, updateProduct } from "./piloto.api";
 import { CategoryIcon, WeightIcon } from "./components/CategoryIcon";
 import { ManualProductModal } from "./components/ManualProductModal";
 import { PilotoModeModal } from "./components/PilotoModeModal";
@@ -14,6 +14,8 @@ import { ScannerQuickAddModal } from "./components/ScannerQuickAddModal";
 import { SelectClientModal } from "./components/SelectClientModal";
 import { usePilotoCart, type PilotoRegisterId } from "./hooks/usePilotoCart";
 import { usePilotoMode } from "./piloto.mode";
+import { createRequestKeeper } from "./piloto.account";
+import { PilotoCreditHistoryScreen } from "./screens/PilotoCreditHistoryScreen";
 import type { PilotoClient } from "./piloto.types";
 import { printSaleTicketByQz } from "./services/piloto.qzPrint";
 import { ClientesScreen } from "./screens/ClientesScreen";
@@ -25,7 +27,7 @@ import { PilotoTicketsScreen } from "./screens/PilotoTicketsScreen";
 import { setAppBusy } from "../../shared/state/appActivity";
 
 // "tablet" (30/10/2026): la tablet del fondo, ver PilotoTabletScreen.tsx.
-type PilotoTopTab = "productos" | "precios" | "panel" | "clientes" | "imagenes" | "tickets" | "tablet";
+type PilotoTopTab = "productos" | "precios" | "panel" | "clientes" | "imagenes" | "tickets" | "tablet" | "creditos";
 
 const NOT_FOUND_MESSAGE = "Producto no encontrado.";
 // Ya no se elige medio de pago en la UI (pedido explicito, 16/09/2026:
@@ -73,7 +75,7 @@ const ARROW_CYCLE_LABELS = ["Producto Manual", ...QUICK_MANUAL_BUTTONS.map((butt
 // al cargar la pagina (el guard de Pro/Basico de mas abajo ya se encarga
 // de corregirla si quedo guardada una pestana que ya no es valida).
 const ACTIVE_TAB_STORAGE_KEY = "piloto-active-top-tab";
-const VALID_TOP_TABS: PilotoTopTab[] = ["productos", "precios", "panel", "clientes", "imagenes", "tickets", "tablet"];
+const VALID_TOP_TABS: PilotoTopTab[] = ["productos", "precios", "panel", "clientes", "imagenes", "tickets", "tablet", "creditos"];
 
 function loadStoredTopTab(): PilotoTopTab | null {
   try {
@@ -128,6 +130,7 @@ export function PilotoHomePage() {
   // aparte: asi conviven bien con las pestanas de Precios/Panel del Pro.
   const [fiarClients, setFiarClients] = useState<PilotoClient[] | null>(null);
   const [isFiarSubmitting, setIsFiarSubmitting] = useState(false);
+  const creditRequest = useRef(createRequestKeeper());
   const titleClickCountRef = useRef(0);
   const titleClickTimeoutRef = useRef<number | null>(null);
 
@@ -205,7 +208,7 @@ export function PilotoHomePage() {
   // no me lleva" -- era este mismo efecto pisando el cambio de pestana al
   // toque, porque Clientes tambien es valida en Basico).
   useEffect(() => {
-    if (!isPro && (activeTopTab === "precios" || activeTopTab === "panel" || activeTopTab === "imagenes" || activeTopTab === "tickets")) {
+    if (!isPro && (activeTopTab === "precios" || activeTopTab === "panel" || activeTopTab === "imagenes" || activeTopTab === "tickets" || activeTopTab === "creditos")) {
       setActiveTopTab("productos");
     }
   }, [isPro, activeTopTab]);
@@ -473,25 +476,16 @@ export function PilotoHomePage() {
   async function handleConfirmFiar(clientId: number) {
     setIsFiarSubmitting(true);
     try {
-      const itemsForEntry = cartItems.map((item) => ({ productName: item.name, quantity: item.quantity, unitPrice: item.price }));
-      const saleTotal = total;
-      const { item: sale } = await createSale(cartItems, "credito");
-      try {
-        await createAccountEntry(clientId, saleTotal, itemsForEntry, sale.id);
-      } catch (entryError) {
-        toast.error(
-          entryError instanceof Error
-            ? `La venta se guardo pero no se cargo en la cuenta del cliente: ${entryError.message}`
-            : "La venta se guardo pero no se cargo en la cuenta del cliente."
-        );
-        clearCart();
-        setFiarClients(null);
-        return;
-      }
+      // Misma venta + mismo cliente = mismo identificador: reintentar despues
+      // de un corte no la anota dos veces.
+      const requestId = creditRequest.current.idFor(
+        JSON.stringify([clientId, cartItems.map((item) => [item.productId, item.name, item.price, item.quantity])])
+      );
+      await createCreditSale(requestId, clientId, cartItems);
+      creditRequest.current.done();
       clearCart();
       setFiarClients(null);
-      const clientName = fiarClients?.find((client) => client.id === clientId)?.name;
-      toast.success(clientName ? `Anotado a la cuenta de ${clientName}.` : "Venta a credito registrada.");
+      toast.success("Venta a credito registrada.");
     } catch (chargeError) {
       toast.error(chargeError instanceof Error ? chargeError.message : "No se pudo registrar la venta a credito.");
     } finally {
@@ -576,6 +570,8 @@ export function PilotoHomePage() {
         <PilotoImagesScreen />
       ) : activeTopTab === "tickets" && isPro ? (
         <PilotoTicketsScreen />
+      ) : activeTopTab === "creditos" && isPro ? (
+        <PilotoCreditHistoryScreen />
       ) : (
         <>
           <RegisterTabs registers={visibleRegisterSummaries} activeRegisterId={activeRegisterId} onSelect={handleSelectRegister} />

@@ -2,6 +2,8 @@ import { API_BASE_URL } from "../../shared/config/api";
 import type {
   CartItem,
   PilotoAccountEntry,
+  PilotoAccountHistory,
+  PilotoAccountPayment,
   PilotoClient,
   PilotoPaymentMethod,
   PilotoPriceCategory,
@@ -108,24 +110,25 @@ export async function updateProduct(productId: number, name: string, price: numb
   return { item: mapProduct(raw.item) };
 }
 
+function toSaleItems(items: CartItem[]) {
+  return items.map((item) => ({
+    // Los ids negativos son lineas manuales locales (sin codigo, nunca guardadas
+    // como producto real): el backend los recibe sin productId.
+    productId: item.productId > 0 ? item.productId : null,
+    name: item.name,
+    price: item.price,
+    quantity: item.quantity,
+    imageUrl: item.imageUrl
+  }));
+}
+
 export async function createSale(items: CartItem[], paymentMethod: PilotoPaymentMethod) {
   const response = await fetch(`${API_BASE_URL}/piloto/sales`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({
-      paymentMethod,
-      items: items.map((item) => ({
-        // Los ids negativos son lineas manuales locales (sin codigo, nunca guardadas
-        // como producto real): el backend los recibe sin productId.
-        productId: item.productId > 0 ? item.productId : null,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-        imageUrl: item.imageUrl
-      }))
-    })
+    body: JSON.stringify({ paymentMethod, items: toSaleItems(items) })
   });
 
   return readJson<SaleResponse>(response);
@@ -176,8 +179,8 @@ export async function getSalesSummary(date?: string): Promise<PilotoSalesSummary
   return readJson<PilotoSalesSummary>(response);
 }
 
-// Clientes / cuenta corriente (06/10/2026): "Fiar" en vez de "Cobrar" --
-// version simple, sin pagos parciales.
+// Clientes / cuenta corriente (06/10/2026; con historial y pagos parciales
+// desde el 27/11/2026): "Fiar" en vez de "Cobrar".
 type ClientListResponse = PilotoClient[];
 type AccountEntryListResponse = PilotoAccountEntry[];
 
@@ -206,23 +209,39 @@ export async function listAccountEntries(clientId?: number): Promise<PilotoAccou
   return readJson<AccountEntryListResponse>(response);
 }
 
-export async function createAccountEntry(
-  clientId: number,
-  total: number,
-  items: { productName: string; quantity: number; unitPrice: number }[],
-  saleId?: number
-): Promise<PilotoAccountEntry> {
-  const response = await fetch(`${API_BASE_URL}/piloto/account-entries`, {
+// Fiar: venta y boleta en un solo paso. Con el mismo requestId no se repite.
+export async function createCreditSale(requestId: string, clientId: number, items: CartItem[]): Promise<PilotoAccountEntry> {
+  const response = await fetch(`${API_BASE_URL}/piloto/credit-sales`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ clientId, total, items, saleId })
+    body: JSON.stringify({ requestId, clientId, items: toSaleItems(items) })
   });
   return readJson<PilotoAccountEntry>(response);
 }
 
-export async function settleAccount(clientId: number): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/piloto/account-entries/client/${clientId}`, { method: "DELETE" });
-  await readJson<{ ok: true }>(response);
+export async function listAccountPayments(): Promise<PilotoAccountPayment[]> {
+  const response = await fetch(`${API_BASE_URL}/piloto/account-payments`, { cache: "no-store" });
+  return readJson<PilotoAccountPayment[]>(response);
+}
+
+// Pago total (settle) o parcial de una cuenta.
+export async function registerAccountPayment(payment: {
+  requestId: string;
+  clientId: number;
+  amount: number;
+  settle: boolean;
+}): Promise<{ payment: PilotoAccountPayment; balanceAfter: number }> {
+  const response = await fetch(`${API_BASE_URL}/piloto/account-payments`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payment)
+  });
+  return readJson<{ payment: PilotoAccountPayment; balanceAfter: number }>(response);
+}
+
+export async function getAccountHistory(): Promise<PilotoAccountHistory> {
+  const response = await fetch(`${API_BASE_URL}/piloto/account-history`, { cache: "no-store" });
+  return readJson<PilotoAccountHistory>(response);
 }
 
 // Pestana "Tickets" (Modo Pro, 24/10/2026): productos con codigo de barras
