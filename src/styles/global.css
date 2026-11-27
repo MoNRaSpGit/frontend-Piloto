@@ -1988,12 +1988,6 @@ input {
 }
 
 /* Cuenta corriente (27/11/2026): pagos, ventana de cobro e historial. */
-.piloto-button--pay {
-  border: 2px solid #15803d;
-  background: #15803d;
-  color: #fff;
-}
-
 .piloto-clientes-actions {
   flex-wrap: wrap;
 }
@@ -2121,4 +2115,108 @@ input {
   margin: 8px 0 0;
   font-weight: 800;
   color: #15803d;
+}
+
+/* Ventana de credito de siempre, mas grande y clara (27/11/2026). */
+.piloto-credit-modal {
+  max-width: 760px;
+  padding: 2rem 2.2rem 2.2rem;
+}
+
+.piloto-credit-modal .piloto-modal-card__header h2 {
+  font-size: 2.1rem;
+}
+
+.piloto-credit-modal .piloto-modal-close {
+  min-height: 60px;
+  padding: 0 26px;
+  font-size: 1.3rem;
+  border-width: 2px;
+}
+
+.piloto-credit-modal__total-box {
+  margin-bottom: 1.4rem;
+  padding: 14px;
+  text-align: center;
+  background: #f1f5f9;
+  border-radius: 14px;
+}
+
+.piloto-credit-modal__total-box .piloto-modal-card__total-label {
+  font-size: 1.5rem;
+  color: #334155;
+}
+
+.piloto-credit-modal__total-box .piloto-modal-card__total {
+  margin: 0;
+  font-size: 4rem;
+  line-height: 1.15;
+}
+
+.piloto-credit-modal .piloto-modal-field span {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.piloto-credit-modal .piloto-modal-field select {
+  width: 100%;
+  min-height: 84px;
+  padding: 0 18px;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #0f172a;
+  border: 3px solid #475569;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.piloto-credit-modal .piloto-modal-field select:focus {
+  border-color: #1d4ed8;
+  outline: 4px solid #bfdbfe;
+}
+
+.piloto-credit-modal .piloto-modal-field.is-selected select {
+  border-color: #15803d;
+  background-color: #f0fdf4;
+}
+
+.piloto-credit-modal .piloto-modal-card__actions {
+  margin-top: 1.4rem;
+}
+
+.piloto-credit-modal .piloto-button {
+  min-height: 92px;
+  padding: 8px 14px;
+  font-size: 1.7rem;
+}
+
+.piloto-credit-modal__confirm {
+  flex: 1.6;
+  border: 2px solid #14532d;
+  background: #15803d;
+  color: #fff;
+  overflow-wrap: anywhere;
+}
+
+.piloto-credit-modal__confirm:disabled {
+  opacity: 1;
+  border-color: #cbd5e1;
+  background: #e2e8f0;
+  color: #475569;
+}
+
+@media (max-width: 640px) {
+  .piloto-credit-modal {
+    padding: 1.2rem;
+  }
+
+  .piloto-credit-modal__total-box .piloto-modal-card__total {
+    font-size: 3rem;
+  }
+
+  .piloto-credit-modal .piloto-button {
+    min-height: 72px;
+    font-size: 1.35rem;
+  }
 }

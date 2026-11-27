@@ -25,7 +25,7 @@ export function ClientesScreen({ onClose }: { onClose: () => void }) {
   const [createError, setCreateError] = useState("");
 
   const [payments, setPayments] = useState<PilotoAccountPayment[]>([]);
-  const [paymentMode, setPaymentMode] = useState<"full" | "partial" | null>(null);
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [isPaying, setIsPaying] = useState(false);
   const paymentRequest = useRef(createRequestKeeper());
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
@@ -99,15 +99,16 @@ export function ClientesScreen({ onClose }: { onClose: () => void }) {
   }
 
   async function handlePayment(amount: number) {
-    if (selectedClientId === null || paymentMode === null) return;
-    const settle = paymentMode === "full";
+    if (selectedClientId === null) return;
+    // Si paga todo, el servidor comprueba que el saldo no haya cambiado.
+    const settle = amount === selectedSaldo;
     setIsPaying(true);
     try {
       const requestId = paymentRequest.current.idFor(`${selectedClientId}|${amount}|${selectedSaldo}`);
       const { balanceAfter } = await registerAccountPayment({ requestId, clientId: selectedClientId, amount, settle });
       paymentRequest.current.done();
       toast.success(balanceAfter === 0 ? "Cuenta saldada." : `Pago anotado. Queda debiendo ${formatCurrency(balanceAfter)}.`);
-      setPaymentMode(null);
+      setIsPaymentOpen(false);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "No se pudo registrar el pago.");
     } finally {
@@ -230,7 +231,7 @@ export function ClientesScreen({ onClose }: { onClose: () => void }) {
                       className={isActive ? "piloto-clientes-row is-active" : "piloto-clientes-row"}
                       onClick={() => {
                         setSelectedClientId(client.id);
-                        setPaymentMode(null);
+                        setIsPaymentOpen(false);
                         setIsConfirmingDelete(false);
                       }}
                     >
@@ -267,11 +268,8 @@ export function ClientesScreen({ onClose }: { onClose: () => void }) {
               </div>
 
               <div className="piloto-clientes-actions">
-                <button type="button" className="piloto-button piloto-button--primary" onClick={() => setPaymentMode("full")} disabled={selectedSaldo <= 0}>
+                <button type="button" className="piloto-button piloto-button--primary" onClick={() => setIsPaymentOpen(true)} disabled={selectedSaldo <= 0}>
                   Saldar cuenta
-                </button>
-                <button type="button" className="piloto-button piloto-button--pay" onClick={() => setPaymentMode("partial")} disabled={selectedSaldo <= 0}>
-                  Pagó una parte
                 </button>
                 <button
                   type="button"
@@ -318,13 +316,12 @@ export function ClientesScreen({ onClose }: { onClose: () => void }) {
                 </ul>
               )}
 
-              {paymentMode ? (
+              {isPaymentOpen ? (
                 <AccountPaymentModal
                   clientName={selectedClient.name}
                   balance={selectedSaldo}
-                  mode={paymentMode}
                   isSubmitting={isPaying}
-                  onClose={() => setPaymentMode(null)}
+                  onClose={() => setIsPaymentOpen(false)}
                   onConfirm={(amount) => void handlePayment(amount)}
                 />
               ) : null}
