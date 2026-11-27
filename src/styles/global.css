@@ -1073,7 +1073,7 @@ input {
   flex: 1;
   min-height: 76px;
   padding: 0.85rem 1rem;
-  font-size: 1.15rem;
+  font-size: 1.4rem;
   font-weight: 700;
   color: #111;
   background-color: #fff;
@@ -1820,4 +1820,169 @@ input {
   font-size: 1.6rem;
   font-weight: 800;
   cursor: pointer;
+}
+
+/* Venta a credito para personas mayores (27/11/2026): letra grande, buen
+   contraste, botones altos y el cliente elegido imposible de confundir. */
+.piloto-fiar-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 720px;
+  max-height: calc(100vh - 2rem);
+  padding: 1.8rem;
+}
+
+.piloto-fiar-modal__header {
+  text-align: center;
+}
+
+.piloto-fiar-modal__header h2 {
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+.piloto-fiar-modal__total {
+  margin: 4px 0 0;
+  font-size: 3.4rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: #0f172a;
+}
+
+.piloto-fiar-modal__label {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.piloto-fiar-modal__search {
+  width: 100%;
+  min-height: 68px;
+  padding: 0 18px;
+  font-size: 1.5rem;
+  color: #0f172a;
+  border: 3px solid #475569;
+  border-radius: 12px;
+}
+
+.piloto-fiar-modal__search:focus {
+  border-color: #1d4ed8;
+  outline: 4px solid #bfdbfe;
+}
+
+.piloto-fiar-modal__list {
+  flex: 1 1 auto;
+  min-height: 160px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.piloto-fiar-modal__client {
+  width: 100%;
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 18px;
+  text-align: left;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #0f172a;
+  background: #fff;
+  border: 3px solid #cbd5e1;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.piloto-fiar-modal__client:hover:not(:disabled) {
+  border-color: #475569;
+  background: #f1f5f9;
+}
+
+.piloto-fiar-modal__client.is-selected,
+.piloto-fiar-modal__client.is-selected:hover:not(:disabled) {
+  color: #fff;
+  background: #15803d;
+  border-color: #14532d;
+}
+
+.piloto-fiar-modal__check {
+  flex: 0 0 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid #64748b;
+  border-radius: 999px;
+  background: #fff;
+  color: #15803d;
+  font-size: 1.6rem;
+  font-weight: 900;
+}
+
+.piloto-fiar-modal__client.is-selected .piloto-fiar-modal__check {
+  border-color: #fff;
+}
+
+.piloto-fiar-modal__name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.piloto-fiar-modal__empty {
+  margin: 0;
+  padding: 18px;
+  text-align: center;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #991b1b;
+  background: #fef2f2;
+  border-radius: 12px;
+}
+
+.piloto-fiar-modal__actions {
+  display: flex;
+  gap: 12px;
+}
+
+.piloto-fiar-modal__actions .piloto-button {
+  min-height: 84px;
+  padding: 8px 14px;
+  font-size: 1.5rem;
+}
+
+.piloto-fiar-modal__confirm {
+  flex: 2;
+  border: 2px solid #14532d;
+  background: #15803d;
+  color: #fff;
+  overflow-wrap: anywhere;
+}
+
+.piloto-fiar-modal__confirm:disabled {
+  border-color: #cbd5e1;
+  background: #e2e8f0;
+  color: #475569;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .piloto-fiar-modal {
+    padding: 1rem;
+  }
+
+  .piloto-fiar-modal__actions {
+    flex-direction: column-reverse;
+  }
+
+  .piloto-fiar-modal__actions .piloto-button {
+    flex: none;
+    min-height: 68px;
+  }
 }

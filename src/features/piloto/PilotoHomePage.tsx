@@ -161,10 +161,10 @@ export function PilotoHomePage() {
   // input del escaner, ya sea que cierro un producto, cobro, o hago
   // cualquier otra cosa".
   useEffect(() => {
-    if (!isCheckoutOpen && !quickAddBarcode && manualModalLabel === null && editingProductId === null && !isFondoOpen) {
+    if (!isCheckoutOpen && !quickAddBarcode && manualModalLabel === null && editingProductId === null && !isFondoOpen && fiarClients === null) {
       setFocusSignal((signal) => signal + 1);
     }
-  }, [isCheckoutOpen, quickAddBarcode, manualModalLabel, editingProductId, isFondoOpen]);
+  }, [isCheckoutOpen, quickAddBarcode, manualModalLabel, editingProductId, isFondoOpen, fiarClients]);
 
   // Al volver a la pestana "Productos" (desde Clientes, Tablet, etc.), el
   // cursor tiene que quedar en el campo del escaner (25/11/2026, pedido
@@ -241,7 +241,7 @@ export function PilotoHomePage() {
           target.isContentEditable);
       if (isEditable && !DOMINANT_ARROW_KEYS.has(event.key)) return;
 
-      if (isCheckoutOpen || quickAddBarcode || editingProductId !== null) return;
+      if (isCheckoutOpen || quickAddBarcode || editingProductId !== null || fiarClients !== null) return;
 
       // preventDefault: que la flecha no mueva el foco entre botones ni
       // haga scroll de la pagina.
@@ -259,7 +259,7 @@ export function PilotoHomePage() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [manualModalLabel, isCheckoutOpen, quickAddBarcode, editingProductId, isPro]);
+  }, [manualModalLabel, isCheckoutOpen, quickAddBarcode, editingProductId, isPro, fiarClients]);
 
   function handleEmptyEnter() {
     if (!cartItems.length) return;
@@ -490,7 +490,8 @@ export function PilotoHomePage() {
       }
       clearCart();
       setFiarClients(null);
-      toast.success("Venta a credito registrada.");
+      const clientName = fiarClients?.find((client) => client.id === clientId)?.name;
+      toast.success(clientName ? `Anotado a la cuenta de ${clientName}.` : "Venta a credito registrada.");
     } catch (chargeError) {
       toast.error(chargeError instanceof Error ? chargeError.message : "No se pudo registrar la venta a credito.");
     } finally {
